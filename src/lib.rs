@@ -7,7 +7,7 @@ pub fn generate(h: usize, v: usize) -> Vec<Vec<f64>>{
                 move |(_v, _)| {
                     let _h= _h as f64 / h as f64;
                     let _v= _v as f64 / h as f64;
-                    let _p = generators::test(_h, _v);
+                    let _p = generators::coswave(_h, _v);
                     f64::min(1.0, f64::max(0.0, _p))
                 }
             ).collect()
