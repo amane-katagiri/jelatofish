@@ -11,6 +11,20 @@ use rand::{
 };
 
 #[derive(Debug)]
+pub enum Generators {
+    DEFAULT,
+    Test,
+    Coswave,
+    Spinflake,
+}
+
+#[derive(Debug)]
+pub struct GeneratorParams {
+    pub coswave: coswave::CoswaveParams,
+    pub spinflake: spinflake::SpinflakeParams,
+}
+
+#[derive(Debug)]
 pub enum PackMethods {
     DEFAULT,
     ScaleToFit,

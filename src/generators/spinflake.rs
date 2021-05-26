@@ -44,6 +44,7 @@ impl Distribution<TwirlMethods> for Standard {
     }
 }
 
+#[derive(Debug)]
 pub struct Floret {
     sinepos_method: SinePositivizingMethods,
     backward: bool,
@@ -56,6 +57,7 @@ pub struct Floret {
     twirl_method: TwirlMethods,
 }
 
+#[derive(Debug)]
 pub struct SpinflakeParams {
     origin_h: f64,
     origin_v: f64,
