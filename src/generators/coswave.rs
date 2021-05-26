@@ -21,6 +21,20 @@ pub struct CoswaveParams {
     accel: f64,
 }
 
+pub fn null_param() -> CoswaveParams {
+    CoswaveParams {
+        origin_h: 0.0,
+        origin_v: 0.0,
+        pack_method: super::PackMethods::DEFAULT,
+        wave_scale: 1.0,
+        sqangle: 0.0,
+        distortion: 0.5,
+        squish: 0.5,
+        accel_method: WaveAccelMethods::DEFAULT,
+        accel: 0.0,
+    }
+}
+
 pub fn rand_param() -> CoswaveParams {
     let mut rng = rand::thread_rng();
     let mut params = CoswaveParams {

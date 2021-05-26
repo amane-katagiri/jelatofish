@@ -69,6 +69,31 @@ pub struct SpinflakeParams {
     layer: Vec<Floret>,
 }
 
+pub fn null_param() -> SpinflakeParams {
+    SpinflakeParams {
+        origin_h: 0.0,
+        origin_v: 0.0,
+        radius: 0.0,
+        squish: 0.0,
+        twist: 0.0,
+        average_florets: false,
+        florets: 1,
+        layer: (0..1).map(|_| {
+            Floret{
+                sinepos_method: SinePositivizingMethods::DEFAULT,
+                backward: false,
+                spines: 1,
+                spine_radius: 0.0,
+                twirl_base: 0.0,
+                twirl_method: TwirlMethods::DEFAULT,
+                twirl_speed: 0.0,
+                twirl_amp: 0.0,
+                twirl_mod: 0.0,
+            }
+        }).collect(),
+    }
+}
+
 pub fn rand_param() -> SpinflakeParams {
     let mut rng = rand::thread_rng();
 
