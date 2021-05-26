@@ -153,8 +153,7 @@ pub fn generate(h: f64, v: f64, params: &SpinflakeParams) -> f64 {
     point
 }
 
-fn chopsin(theta: f64, params: &Floret) -> f64
-    {
+fn chopsin(theta: f64, params: &Floret) -> f64 {
     let out = theta.sin();
     let out = match params.sinepos_method {
         SinePositivizingMethods::SineCompressMethod =>(out + 1.0) / 2.0,
@@ -224,8 +223,7 @@ fn rawpoint(h: f64, v: f64, params: &SpinflakeParams) -> f64 {
     1.0
 }
 
-fn calcwave(theta: f64, dist: f64, params: &Floret) -> f64
-    {
+fn calcwave(theta: f64, dist: f64, params: &Floret) -> f64 {
     /*
     Calculate the distance from centre this floret adds to the mix
     at the particular angle supplied.
