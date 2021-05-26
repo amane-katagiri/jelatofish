@@ -1,5 +1,9 @@
 pub mod coswave;
 pub mod spinflake;
+pub mod flatwave;
+pub mod rangefrac;
+pub mod bubble;
+pub mod test;
 
 use rand::{
     distributions::{Distribution, Standard},
@@ -46,8 +50,4 @@ pub fn packed_cos(distance: f64, scale: f64, pack_method: &PackMethods) -> f64 {
         PackMethods::SlopeToFit => ((distance * scale % std::f64::consts::PI).cos() + 1.0) / 2.0,
         _ => 0.5,
     }
-}
-
-pub fn test(h: f64, v: f64) -> f64 {
-    (-h * v).exp()
 }
