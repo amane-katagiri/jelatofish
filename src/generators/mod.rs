@@ -27,6 +27,8 @@ pub mod rangefrac;
 pub mod bubble;
 pub mod test;
 
+use super::types;
+
 use rand::{
     distributions::{Distribution, Standard},
     Rng,
@@ -54,31 +56,35 @@ impl Distribution<Generators> for Standard {
 }
 
 #[derive(Debug)]
-pub struct GeneratorPropery {
+struct GeneratorProperty {
     is_anti_aliased: bool,
     is_seamless: bool,
 }
-
-fn get_generator_property(generator: &Generators) -> GeneratorPropery {
-    match generator {
-        Generators::Coswave => GeneratorPropery {
-            is_anti_aliased: false,
-            is_seamless: false,
-        },
-        Generators::Spinflake => GeneratorPropery {
-            is_anti_aliased: false,
-            is_seamless: true,
-        },
-        _ => GeneratorPropery {
-            is_anti_aliased: false,
-            is_seamless: false,
+impl GeneratorProperty {
+    fn get(generator: &Generators) -> GeneratorProperty {
+        match generator {
+            Generators::Coswave => GeneratorProperty {
+                is_anti_aliased: false,
+                is_seamless: false,
+            },
+            Generators::Spinflake => GeneratorProperty {
+                is_anti_aliased: false,
+                is_seamless: true,
+            },
+            Generators::Test => GeneratorProperty {
+                is_anti_aliased: false,
+                is_seamless: false,
+            },
+            Generators::DEFAULT => GeneratorProperty {
+                is_anti_aliased: false,
+                is_seamless: false,
+            }
         }
     }
 }
 
 #[derive(Debug)]
 pub struct GeneratorParams {
-    pub generator: Generators,
     pub coswave: coswave::CoswaveParams,
     pub spinflake: spinflake::SpinflakeParams,
 }
@@ -125,28 +131,82 @@ pub fn packed_cos(distance: f64, scale: f64, pack_method: &PackMethods) -> f64 {
     }
 }
 
-pub fn generate(h: usize, v: usize, params: &GeneratorParams) -> Vec<Vec<f64>> {
+#[derive(Debug)]
+#[derive(Default)]
+#[derive(Clone)]
+#[derive(Copy)]
+struct RollVector {
+    x: usize,
+    y: usize,
+}
+impl RollVector {
+    fn new(x: usize, y: usize) -> Self {
+        RollVector {
+            x: x,
+            y: y,
+        }
+    }
+}
+
+pub fn generate(
+    size: types::Area, generator: &Generators, params: &GeneratorParams
+) -> types::PixelMap {
+    /*
+    Create a texture of appropriate dimensions from this generator.
+    This is where all the interesting work starts getting done for
+    the generators.
+    Our job is to verify the request - make sure it is a valid generator,
+    and that the input parameters are sane.
+    The end result of Generate is either NULL, or a greybuf containing an anti-aliased,
+    seamlessly wrapped greyscale 8-bit monolayer texture.
+    We don't care what happens to the greybuf after we produce it.
+    */
     let mut rng = rand::thread_rng();
 
-    let roll_h = rng.gen_range(0..=h);
-    let roll_v = rng.gen_range(0..=v);
+    let roll = RollVector::new(
+        rng.gen_range(0..=size.width),
+        rng.gen_range(0..=size.height)
+    );
 
-    vec![vec![0 as f64; h]; v].iter().enumerate().map(
+    vec![vec![0 as f64; size.width]; size.height].iter().enumerate().map(
         |(y, line)| {
             line.iter().enumerate().map(
                 |(x, _)| {
-                    f64::min(1.0, f64::max(0.0, get_layer_pixel(x, y, h, v, roll_h, roll_v, &params)))
+                    f64::min(1.0, f64::max(0.0, get_layer_pixel(
+                        types::PixelPoint::new(x, y), size, roll, generator, &params
+                    ).unwrap()))
                 }
             ).collect()
         }
     ).collect()
 }
 
+#[derive(Debug)]
+#[derive(Default)]
+#[derive(Clone)]
+#[derive(Copy)]
+struct GeneratorPoint {
+    // must be 0.0..=1.0
+    x: f64,
+    y: f64,
+}
+impl GeneratorPoint {
+    fn new(x: f64, y: f64) -> Self {
+        GeneratorPoint {
+            x: x,
+            y: y,
+        }
+    }
+}
+
 fn get_layer_pixel(
-    x: usize, y: usize, h: usize, v: usize, roll_h: usize, roll_v: usize, params: &GeneratorParams
-) -> f64 {
-    if x >= h && y >= v {
-        return 0.0;
+    pixel: types::PixelPoint,
+    size: types:: Area,
+    roll: RollVector,
+    generator: &Generators, params: &GeneratorParams
+) -> Result<f64, String> {
+    if pixel.x >= size.width && pixel.y >= size.height {
+        return Err(format!("pixel.x >= {} && pixel.y >= {}", size.width, size.height));
     }
     /*
     Calculate the point they wanted.
@@ -157,15 +217,25 @@ fn get_layer_pixel(
     code. Then we convert the floating point value to a standard 0..255
     value and return it to the caller.
     */
-    let x = (if x + roll_h < h {x + roll_h} else {x + roll_h - h}) as f64 / h as f64;
-    let y = (if y + roll_v < v {y + roll_v} else {y + roll_v - v}) as f64 / v as f64;
-    let fudge = 1.0 / (h + v) as f64;
-    get_anti_aliased_point(x, y, fudge, params)
+    let pixel = GeneratorPoint::new(
+        (
+            if pixel.x + roll.x < size.width {pixel.x + roll.x}
+            else {pixel.x + roll.x - size.width}
+        ) as f64 / size.width as f64,
+        (
+            if pixel.y + roll.y < size.height {pixel.y + roll.y}
+            else {pixel.y + roll.y - size.height}
+        ) as f64 / size.height as f64
+    );
+    let fudge = 1.0 / (size.width + size.height) as f64;
+    Ok(get_anti_aliased_point(pixel, fudge, generator, params))
 }
 
-fn get_anti_aliased_point(x: f64, y: f64, fudge: f64, params: &GeneratorParams) -> f64 {
-    let mut pixel = get_wrapped_point(x, y, params);
-    if !get_generator_property(&params.generator).is_anti_aliased {
+fn get_anti_aliased_point(
+    pixel: GeneratorPoint, fudge: f64, generator: &Generators, params: &GeneratorParams
+) -> f64 {
+    let mut value = get_wrapped_point(pixel, generator, params);
+    if !GeneratorProperty::get(generator).is_anti_aliased {
         /*
         This generator does not anti-alias itself.
         We need to do the anti-aliasing for it.
@@ -176,15 +246,23 @@ fn get_anti_aliased_point(x: f64, y: f64, fudge: f64, params: &GeneratorParams) 
         improves the way sharp transitions look. You can't see the individual
         pixels nearly so easily.
         */
-        pixel += get_wrapped_point(x + fudge, y, params);
-        pixel += get_wrapped_point(x, y + fudge, params);
-        pixel += get_wrapped_point(x + fudge, y + fudge, params);
-        pixel /= 4.0;
+        value += get_wrapped_point(
+            GeneratorPoint::new(pixel.x + fudge, pixel.y), generator, params
+        );
+        value += get_wrapped_point(
+            GeneratorPoint::new(pixel.x, pixel.y + fudge), generator, params
+        );
+        value += get_wrapped_point(
+            GeneratorPoint::new(pixel.x + fudge, pixel.y + fudge), generator, params
+        );
+        value /= 4.0;
     }
-    pixel
+    value
 }
 
-fn get_wrapped_point(x: f64, y: f64, params: &GeneratorParams) -> f64 {
+fn get_wrapped_point(
+    pixel: GeneratorPoint, generator: &Generators, params: &GeneratorParams
+) -> f64 {
     /*
     Get a point from this function.
     But don't just get the point - also get some out-of-band values and mix
@@ -193,13 +271,13 @@ fn get_wrapped_point(x: f64, y: f64, params: &GeneratorParams) -> f64 {
     Some functions do this on their own; if that's the case, we let it do it.
     Otherwise, we do the computations ourself.
     */
-    let mut pixel = call_generator(x, y, params);
+    let mut value = call_generator(pixel, generator, params);
     /*
     If this function does not generate seamlessly-tiled textures,
     then it is our job to pull in out-of-band data and mix it in
     with the actual pixel to get a smooth edge.
     */
-    if !get_generator_property(&params.generator).is_seamless {
+    if !GeneratorProperty::get(generator).is_seamless {
         /*
         We mix this pixel with out-of-band values from the opposite side
         of the tile. This is a "weighted average" proportionate to the pixel's
@@ -208,21 +286,25 @@ fn get_wrapped_point(x: f64, y: f64, params: &GeneratorParams) -> f64 {
         tiled together.
         */
         //The farh and farv are on the opposite side of the tile.
-        let farh = x + 1.0;
-        let farv = y + 1.0;
+        let farh = pixel.x + 1.0;
+        let farv = pixel.y + 1.0;
         //There are three pixel values to grab off the edges.
-        let farval1 = call_generator(x, farv, params);
-        let farval2 = call_generator(farh, y, params);
-        let farval3 = call_generator(farh, farv, params);
+        let farval1 = call_generator(GeneratorPoint::new(pixel.x, farv), generator, params);
+        let farval2 = call_generator(GeneratorPoint::new(farh, pixel.y), generator, params);
+        let farval3 = call_generator(GeneratorPoint::new(farh, farv), generator, params);
         //Calculate the weight factors for each far point.
-        let weight = x * y;
-        let farweight1 = x * (2.0 - farv);
-        let farweight2 = (2.0 - farh) * y;
+        let weight = pixel.x * pixel.y;
+        let farweight1 = pixel.x * (2.0 - farv);
+        let farweight2 = (2.0 - farh) * pixel.y;
         let farweight3 = (2.0 - farh) * (2.0 - farv);
         let totalweight = weight + farweight1 + farweight2 + farweight3;
         //Now average all the pixels together, weighting each one by the local vs far weights.
-        pixel = ((pixel * weight) + (farval1 * farweight1) + (farval2 * farweight2) + (farval3 * farweight3))
-            / totalweight;
+        value = (
+            (value * weight)
+            + (farval1 * farweight1)
+            + (farval2 * farweight2)
+            + (farval3 * farweight3)
+        ) / totalweight;
     }
     /*
     If the generator messes up and returns an out-of-range value, we clip it here.
@@ -232,15 +314,17 @@ fn get_wrapped_point(x: f64, y: f64, params: &GeneratorParams) -> f64 {
     If you're writing a generator it is your job to make your code work, and my job to
     make sure my code works even if yours doesn't.
     */
-    if pixel > 1.0 {1.0} else if pixel < 0.0 {0.0} else {pixel}
+    if value > 1.0 {1.0} else if value < 0.0 {0.0} else {value}
 }
 
-fn call_generator(y: f64, x: f64, params: &GeneratorParams) -> f64 {
-    match params.generator {
+fn call_generator(
+    pixel: GeneratorPoint, generator: &Generators, params: &GeneratorParams
+) -> f64 {
+    match generator {
         Generators::Coswave
-            => coswave::generate(y, x, &params.coswave),
+            => coswave::generate(pixel.x, pixel.y, &params.coswave),
         Generators::Spinflake
-            => spinflake::generate(y, x, &params.spinflake),
-        _ => test::generate(y, x),
+            => spinflake::generate(pixel.x, pixel.y, &params.spinflake),
+        _ => test::generate(pixel.x, pixel.y),
     }
 }

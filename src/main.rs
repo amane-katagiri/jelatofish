@@ -22,7 +22,33 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 use jelatofish;
 
+use std::path::Path;
+use image;
+
 fn main() {
-    jelatofish::save_image(256, 256, "image.png");
+    save_image(256, 256, "image.png");
     println!("Hello, world!");
+}
+
+pub fn save_image(width: usize, height: usize, filename: &str) {
+    let params = jelatofish::generators::GeneratorParams {
+        coswave: jelatofish::generators::coswave::rand_param(),
+        spinflake: jelatofish::generators::spinflake::rand_param(),
+    };
+    let fish = jelatofish::Jelatofish::random(
+        jelatofish::types::Area::new(width, height),
+        &params, &Default::default(), None, None
+    ).unwrap();
+    let mut imgbuf = image::ImageBuffer::new(width as u32, height as u32);
+
+    const MAX_CHANVAL: f64 = 255.0;
+    for (x, y, pixel) in imgbuf.enumerate_pixels_mut() {
+        let p = fish.get_pixel_val(x as usize, y as usize).unwrap();
+        *pixel = image::Rgb([
+            (p.red * MAX_CHANVAL) as u8,
+            (p.blue * MAX_CHANVAL) as u8,
+            (p.green * MAX_CHANVAL) as u8,
+        ]);
+    }
+    imgbuf.save(&Path::new(filename)).unwrap();
 }
