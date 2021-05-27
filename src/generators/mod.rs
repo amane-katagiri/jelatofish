@@ -97,6 +97,11 @@ pub enum PackMethods {
     TruncateToFit,
     SlopeToFit,
 }
+impl Default for PackMethods {
+    fn default() -> Self {
+        PackMethods::DEFAULT
+    }
+}
 impl Distribution<PackMethods> for Standard {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> PackMethods {
         match rng.gen_range(0..=3) {

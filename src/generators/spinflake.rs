@@ -1,3 +1,26 @@
+/*
+
+Copyright ©2021 Amane Katagiri
+Copyright ©1999 Mars Saxman
+All Rights Reserved
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+*/
+
+use super::super::game;
 use rand::{
     distributions::{Distribution, Standard},
     Rng,
@@ -25,6 +48,11 @@ impl Distribution<SinePositivizingMethods> for Standard {
         }
     }
 }
+impl Default for SinePositivizingMethods {
+    fn default() -> Self {
+        SinePositivizingMethods::DEFAULT
+    }
+}
 
 #[derive(Debug)]
 pub enum TwirlMethods {
@@ -43,8 +71,14 @@ impl Distribution<TwirlMethods> for Standard {
         }
     }
 }
+impl Default for TwirlMethods {
+    fn default() -> Self {
+        TwirlMethods::DEFAULT
+    }
+}
 
 #[derive(Debug)]
+#[derive(Default)]
 pub struct Floret {
     sinepos_method: SinePositivizingMethods,
     backward: bool,
@@ -68,78 +102,73 @@ pub struct SpinflakeParams {
     florets: i32,
     layer: Vec<Floret>,
 }
-
-pub fn null_param() -> SpinflakeParams {
-    SpinflakeParams {
-        origin_h: 0.0,
-        origin_v: 0.0,
-        radius: 0.0,
-        squish: 0.0,
-        twist: 0.0,
-        average_florets: false,
-        florets: 1,
-        layer: (0..1).map(|_| {
-            Floret{
-                sinepos_method: SinePositivizingMethods::DEFAULT,
-                backward: false,
-                spines: 1,
-                spine_radius: 0.0,
-                twirl_base: 0.0,
-                twirl_method: TwirlMethods::DEFAULT,
-                twirl_speed: 0.0,
-                twirl_amp: 0.0,
-                twirl_mod: 0.0,
-            }
-        }).collect(),
+impl Default for SpinflakeParams {
+    fn default() -> Self {
+        SpinflakeParams {
+            layer: (0..1).map(|_| {
+                Floret{
+                    sinepos_method: SinePositivizingMethods::DEFAULT,
+                    backward: false,
+                    spines: 1,
+                    spine_radius: 0.0,
+                    twirl_base: 0.0,
+                    twirl_method: TwirlMethods::DEFAULT,
+                    twirl_speed: 0.0,
+                    twirl_amp: 0.0,
+                    twirl_mod: 0.0,
+                }
+            }).collect(), ..Default::default()
+        }
     }
 }
+impl SpinflakeParams {
+    pub fn random() -> Self {
+        let mut rng = game::get_rng();
 
-pub fn rand_param() -> SpinflakeParams {
-    let mut rng = rand::thread_rng();
-
-    let florets = rng.gen_range(0..=(MAX_FLORETS as i32)) + 1;
-    let params = SpinflakeParams {
-        origin_h: rng.gen_range(0.0..=1.0),
-        origin_v: rng.gen_range(0.0..=1.0),
-        radius: rng.gen_range(0.0..=1.0),
-        squish: rng.gen_range(0.0..=2.75) * 0.25,
-        twist: rng.gen_range(0.0..=std::f64::consts::PI),
-        average_florets: rng.gen_range(0..2) == 0,
-        florets: florets,
-        layer: (0..florets).map(|_| {
-            let mut floret = Floret{
-                sinepos_method: rand::random(),
-                backward: rng.gen_range(0..2) == 0,
-                spines: rng.gen_range(0..=15) + 1,
-                spine_radius: rng.gen_range(0.0..=0.5),
-                twirl_base: rng.gen_range(0.0..=std::f64::consts::PI),
-                twirl_method: rand::random(),
-                twirl_speed: 0.0,
-                twirl_amp: 0.0,
-                twirl_mod: 0.0,
-            };
-            if let SinePositivizingMethods::SineAbsoluteMethod = floret.sinepos_method {
-                if floret.spines % 2 == 1 {
-                    floret.spines += 1;
+        let florets = rng.gen_range(0..=(MAX_FLORETS as i32)) + 1;
+        let params = SpinflakeParams {
+            origin_h: rng.gen_range(0.0..=1.0),
+            origin_v: rng.gen_range(0.0..=1.0),
+            radius: rng.gen_range(0.0..=1.0),
+            squish: rng.gen_range(0.0..=2.75) * 0.25,
+            twist: rng.gen_range(0.0..=std::f64::consts::PI),
+            average_florets: rng.gen_range(0..2) == 0,
+            florets: florets,
+            layer: (0..florets).map(|_| {
+                let mut floret = Floret{
+                    sinepos_method: rand::random(),
+                    backward: rng.gen_range(0..2) == 0,
+                    spines: rng.gen_range(0..=15) + 1,
+                    spine_radius: rng.gen_range(0.0..=0.5),
+                    twirl_base: rng.gen_range(0.0..=std::f64::consts::PI),
+                    twirl_method: rand::random(),
+                    twirl_speed: 0.0,
+                    twirl_amp: 0.0,
+                    twirl_mod: 0.0,
+                };
+                if let SinePositivizingMethods::SineAbsoluteMethod = floret.sinepos_method {
+                    if floret.spines % 2 == 1 {
+                        floret.spines += 1;
+                    }
                 }
-            }
-            match floret.twirl_method {
-                TwirlMethods::TwirlSineMethod => {
-                    floret.twirl_speed = rng.gen_range(0.0..=(MAX_TWIRL * std::f64::consts::PI));
-                    floret.twirl_amp = rng.gen_range(-MAX_SINEAMP..=MAX_SINEAMP);
-                    floret.twirl_mod = rng.gen_range(-0.5..=0.5);
-                },
-                TwirlMethods::TwirlCurveMethod => {
-                    floret.twirl_speed = rng.gen_range(-MAX_TWIRL..=MAX_TWIRL);
-                    floret.twirl_amp = rng.gen_range(-MAX_SINEAMP..=MAX_SINEAMP);
-                },
-                _ => {},
-            }
-            floret
-        }).collect(),
-    };
+                match floret.twirl_method {
+                    TwirlMethods::TwirlSineMethod => {
+                        floret.twirl_speed = rng.gen_range(0.0..=(MAX_TWIRL * std::f64::consts::PI));
+                        floret.twirl_amp = rng.gen_range(-MAX_SINEAMP..=MAX_SINEAMP);
+                        floret.twirl_mod = rng.gen_range(-0.5..=0.5);
+                    },
+                    TwirlMethods::TwirlCurveMethod => {
+                        floret.twirl_speed = rng.gen_range(-MAX_TWIRL..=MAX_TWIRL);
+                        floret.twirl_amp = rng.gen_range(-MAX_SINEAMP..=MAX_SINEAMP);
+                    },
+                    _ => {},
+                }
+                floret
+            }).collect(),
+        };
 
-    params
+        params
+    }
 }
 
 pub fn generate(h: f64, v: f64, params: &SpinflakeParams) -> f64 {

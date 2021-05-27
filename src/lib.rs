@@ -22,19 +22,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 pub mod generators;
 pub mod types;
+pub mod game;
 
 use rand::{
     Rng,
-    SeedableRng,
     distributions::{Distribution, Standard},
 };
-
-fn get_rng() -> rand::rngs::SmallRng {
-    rand::rngs::SmallRng::from_rng(&mut rand::thread_rng()).unwrap()
-}
-fn maybe() -> bool {
-    get_rng().gen_range(0..2) == 0
-}
 
 #[derive(Debug)]
 #[derive(Default)]
@@ -79,7 +72,7 @@ impl ColourPalette {
         If the palette is empty, create it from random values.
         */
         if self.colours.len() > 1 {
-            let mut rng = get_rng();
+            let mut rng = game::get_rng();
 
             let c = &self.colours[rng.gen_range(0..self.colours.len())];
             if 0.0 <= c.red && c.red <= 1.0
@@ -132,7 +125,7 @@ impl Jelatofish {
         pixel data. These will contain the complete package of settings
         used to calculate image values.
         */
-        let mut rng = get_rng();
+        let mut rng = game::get_rng();
         let layer_count = match layer_count {
             Some(x) if Jelatofish::MIN_LAYERS <= x && x <= Jelatofish::MAX_LAYERS => x,
             None => rng.gen_range(Jelatofish::MIN_LAYERS..=Jelatofish::MAX_LAYERS),
@@ -177,13 +170,13 @@ impl Jelatofish {
                 ColourLayer {
                     image: generators::generate(size, &rand::random(), &params),
                     //Flip a coin. If it lands heads-up, create another layer for use as a mask.
-                    mask: if maybe() {
+                    mask: if game::maybe() {
                         Some(
                             generators::generate(size, &rand::random(), &params)
                         )
                     } else {None},
                     //Flip another coin. If it lands heads-up, set the flag so we invert this layer.
-                    invert_mask: maybe(),
+                    invert_mask: game::maybe(),
                     back: back,
                     fore: fore,
                 }
