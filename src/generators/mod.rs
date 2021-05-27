@@ -36,8 +36,13 @@ use rand::{
 pub enum Generators {
     DEFAULT,
     Test,
+    //Our first one is the workhorse Coswave. It can do anything.
     Coswave,
+    //Next is the spinflake generator, for more shapely patterns.
     Spinflake,
+    //The range fractal, which creates mountainous organic rough textures.
+    //The flatwave generator, which creates interfering linear waves.
+    //Bubble generator, which creates lumpy, curved turbulences.
 }
 impl Distribution<Generators> for Standard {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Generators {
@@ -180,7 +185,20 @@ fn get_anti_aliased_point(x: f64, y: f64, fudge: f64, params: &GeneratorParams) 
 }
 
 fn get_wrapped_point(x: f64, y: f64, params: &GeneratorParams) -> f64 {
+    /*
+    Get a point from this function.
+    But don't just get the point - also get some out-of-band values and mix
+    them in proportionately. This results in a seamlessly wrapped texture,
+    where you can't see the edges.
+    Some functions do this on their own; if that's the case, we let it do it.
+    Otherwise, we do the computations ourself.
+    */
     let mut pixel = call_generator(x, y, params);
+    /*
+    If this function does not generate seamlessly-tiled textures,
+    then it is our job to pull in out-of-band data and mix it in
+    with the actual pixel to get a smooth edge.
+    */
     if !get_generator_property(&params.generator).is_seamless {
         /*
         We mix this pixel with out-of-band values from the opposite side
@@ -206,6 +224,14 @@ fn get_wrapped_point(x: f64, y: f64, params: &GeneratorParams) -> f64 {
         pixel = ((pixel * weight) + (farval1 * farweight1) + (farval2 * farweight2) + (farval3 * farweight3))
             / totalweight;
     }
+    /*
+    If the generator messes up and returns an out-of-range value, we clip it here.
+    This way, curves that leap out of bounds simply get chopped off, instead of getting
+    renormalized at the opposite end of the scale leading to big discontinuities and ugliness.
+    This can mask bugs in a generator, but we aren't the generator so we don't care.
+    If you're writing a generator it is your job to make your code work, and my job to
+    make sure my code works even if yours doesn't.
+    */
     if pixel > 1.0 {1.0} else if pixel < 0.0 {0.0} else {pixel}
 }
 

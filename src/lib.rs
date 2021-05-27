@@ -67,7 +67,7 @@ pub struct ColourLayer {
     fore: Colour,
     //The background colour, used for low image values.
     back: Colour,
-    //The mask image. If filled with 0, we use the image layer as its own mask.
+    //The mask image. If None, we use the image layer as its own mask.
     mask: Option<Vec<Vec<f64>>>,
     //If the flag is true, we invert the mask.
     invert_mask: bool,
