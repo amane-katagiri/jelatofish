@@ -171,11 +171,11 @@ impl SpinflakeParams {
     }
 }
 
-pub fn generate(h: f64, v: f64, params: &SpinflakeParams) -> f64 {
-    let point = vtiledpoint(h, v, params);
-    if h > 0.5 {
-        let farpoint = vtiledpoint(h - 1.0, v, params);
-        let farweight = (h - 0.5) * 2.0;
+pub fn generate(x: f64, y: f64, params: &SpinflakeParams) -> f64 {
+    let point = vtiledpoint(x, y, params);
+    if x > 0.5 {
+        let farpoint = vtiledpoint(x - 1.0, y, params);
+        let farweight = (x - 0.5) * 2.0;
         let weight = 1.0 - farweight;
         return (point * weight) + (farpoint * farweight);
     }
@@ -201,38 +201,38 @@ fn chopsin(theta: f64, params: &Floret) -> f64 {
     out
 }
 
-fn vtiledpoint(h: f64, v: f64, params: &SpinflakeParams) -> f64 {
-    let point = rawpoint(h, v, params);
-    if v > 0.5 {
-        let farpoint = rawpoint(h, v - 1.0, params);
-        let farweight = (v - 0.5) * 2.0;
+fn vtiledpoint(x: f64, y: f64, params: &SpinflakeParams) -> f64 {
+    let point = rawpoint(x, y, params);
+    if y > 0.5 {
+        let farpoint = rawpoint(x, y - 1.0, params);
+        let farweight = (y - 0.5) * 2.0;
         let weight = 1.0 - farweight;
         return (point * weight) + (farpoint * farweight);
     }
     point
 }
 
-fn rawpoint(h: f64, v: f64, params: &SpinflakeParams) -> f64 {
+fn rawpoint(x: f64, y: f64, params: &SpinflakeParams) -> f64 {
     /*
     Rotate the point around our origin. This lets the squashed bulge-points on
     the sides of the squished spinflake point in random directions - not just aligned
     with the cartesian axes.
     */
-    let h = h - params.origin_h;
-    let v = v - params.origin_v;
+    let x = x - params.origin_h;
+    let y = y - params.origin_v;
 
-    let hypangle = (v / h).atan() + params.twist;
-    let origindist = h.hypot(v);
+    let hypangle = (y / x).atan() + params.twist;
+    let origindist = x.hypot(y);
 
-    let h = hypangle.cos() * origindist;
-    let v = hypangle.sin() * origindist;
+    let x = hypangle.cos() * origindist;
+    let y = hypangle.sin() * origindist;
     //Calculate the distance from the origin to this point. Again.
-    let origindist = (h * params.squish).hypot(v / params.squish);
+    let origindist = (x * params.squish).hypot(y / params.squish);
     //If we are at the origin, there is no need to do the computations.
     if origindist != 0.0 {
         //The edge is (currently) a circle some radius units away.
         //Compute the angle this point represents to the origin.
-        let pointangle = (v / h).atan();
+        let pointangle = (y / x).atan();
         let mut edgedist = params.radius;
         for layer in &params.layer {
             edgedist += calcwave(pointangle, origindist, &layer);

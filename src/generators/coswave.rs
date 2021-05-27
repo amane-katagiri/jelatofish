@@ -109,19 +109,19 @@ impl CoswaveParams {
     }
 }
 
-pub fn generate(h: f64, v: f64, params: &CoswaveParams) -> f64 {
+pub fn generate(x: f64, y: f64, params: &CoswaveParams) -> f64 {
     //Rotate the axes of this shape.
-    let h = h - params.origin_h;
-    let v = v - params.origin_v;
+    let x = x - params.origin_h;
+    let y = y - params.origin_v;
 
-    let hypangle = ((v / h) * params.distortion).atan() + params.sqangle;
-    let hypotenuse = h.hypot(v);
+    let hypangle = ((y / x) * params.distortion).atan() + params.sqangle;
+    let hypotenuse = x.hypot(y);
 
-    let h = hypangle.cos() * hypotenuse;
-    let v = hypangle.sin() * hypotenuse;
+    let x = hypangle.cos() * hypotenuse;
+    let y = hypangle.sin() * hypotenuse;
 
     //Calculate the squished distance from the origin to the desired point.
-    let hypotenuse = (h * params.squish).hypot(v / params.squish);
+    let hypotenuse = (x * params.squish).hypot(y / params.squish);
     //Scale the wavescale according to our accelerator function.
     let compwavescale = match params.accel_method {
         WaveAccelMethods::AccelNone => params.wave_scale,
