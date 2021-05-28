@@ -66,7 +66,7 @@ pub struct ColourPalette {
     pub colours: Vec<Colour>,
 }
 impl ColourPalette {
-    pub fn random(&self) -> Result<Colour, String> {
+    pub fn sample(&self) -> Result<Colour, String> {
         /*
         Pick a random pixel from this palette.
         If the palette is empty, create it from random values.
@@ -158,11 +158,11 @@ impl Jelatofish {
                 Half the time, we invert the mask.
                 */
                 //Now pick some random colours to use as fore and back of gradients.
-                let back = colours.random().unwrap();
+                let back = colours.sample().unwrap();
                 //The fore and back colours should NEVER be equal.
                 //Keep picking random colours until they don't match.
                 let fore = loop {
-                    let fore = colours.random().unwrap();
+                    let fore = colours.sample().unwrap();
                     if fore.red != back.red || fore.green != back.green || fore.blue != back.blue {
                         break fore;
                     }
