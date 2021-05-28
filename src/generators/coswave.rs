@@ -20,15 +20,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-use super::super::game;
-use rand::Rng;
+use rand::{
+    distributions::{Distribution, Standard},
+    Rng,
+};
 
 #[derive(Debug)]
 pub enum WaveAccelMethods {
     DEFAULT,
     AccelNone,
     AccelLinear,
-    //AccelSine,
 }
 impl Default for WaveAccelMethods {
     fn default() -> Self {
@@ -39,8 +40,7 @@ impl Default for WaveAccelMethods {
 #[derive(Debug)]
 #[derive(Default)]
 pub struct CoswaveParams {
-    origin_h: f64,
-    origin_v: f64,
+    origin: super::GeneratorPoint,
     wave_scale: f64,
     squish: f64,
     sqangle: f64,
@@ -49,13 +49,10 @@ pub struct CoswaveParams {
     accel_method: WaveAccelMethods,
     accel: f64,
 }
-impl CoswaveParams {
-    pub fn random() -> Self {
-        let mut rng = game::get_rng();
-
+impl Distribution<CoswaveParams> for Standard {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> CoswaveParams {
         let mut params = CoswaveParams {
-            origin_h: rng.gen_range(0.0..=1.0),
-            origin_v: rng.gen_range(0.0..=1.0),
+            origin: rand::random(),
             pack_method: rand::random(),
             wave_scale: rng.gen_range(0.0..=25.0) + 1.0,
             /*
@@ -109,10 +106,10 @@ impl CoswaveParams {
     }
 }
 
-pub fn generate(x: f64, y: f64, params: &CoswaveParams) -> f64 {
+pub fn generate(pixel: super::GeneratorPoint, params: &CoswaveParams) -> f64 {
     //Rotate the axes of this shape.
-    let x = x - params.origin_h;
-    let y = y - params.origin_v;
+    let x = pixel.x - params.origin.x;
+    let y = pixel.y - params.origin.y;
 
     let hypangle = ((y / x) * params.distortion).atan() + params.sqangle;
     let hypotenuse = x.hypot(y);

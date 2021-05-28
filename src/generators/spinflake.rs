@@ -20,15 +20,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-use super::super::game;
 use rand::{
     distributions::{Distribution, Standard},
     Rng,
 };
-
-const MAX_TWIRL: f64 = 14.0;
-const MAX_SINEAMP: f64 = 4.0;
-const MAX_FLORETS: usize = 3;
 
 #[derive(Debug)]
 pub enum SinePositivizingMethods {
@@ -60,7 +55,6 @@ pub enum TwirlMethods {
     TwirlNoneMethod,
     TwirlCurveMethod,
     TwirlSineMethod,
-    // TwirlAccelMethod,
 }
 impl Distribution<TwirlMethods> for Standard {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> TwirlMethods {
@@ -79,107 +73,110 @@ impl Default for TwirlMethods {
 
 #[derive(Debug)]
 #[derive(Default)]
+pub struct Twirl {
+    base: f64,
+    speed: f64,
+    amp: f64,
+    method: TwirlMethods,
+}
+impl Twirl {
+    const MAX_TWIRL: f64 = 14.0;
+    const MAX_SINEAMP: f64 = 4.0;
+}
+impl Distribution<Twirl> for Standard {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Twirl {
+        let mut twirl = Twirl {
+            base: rng.gen_range(0.0..=std::f64::consts::PI),
+            method: rand::random(),
+            ..Default::default()
+        };
+        match twirl.method {
+            TwirlMethods::TwirlSineMethod => {
+                twirl.speed = rng.gen_range(0.0..=(Twirl::MAX_TWIRL * std::f64::consts::PI));
+                twirl.amp = rng.gen_range(-Twirl::MAX_SINEAMP..=Twirl::MAX_SINEAMP);
+            },
+            TwirlMethods::TwirlCurveMethod => {
+                twirl.speed = rng.gen_range(-Twirl::MAX_TWIRL..=Twirl::MAX_TWIRL);
+                twirl.amp = rng.gen_range(-Twirl::MAX_SINEAMP..=Twirl::MAX_SINEAMP);
+            },
+            _ => {},
+        };
+        twirl
+    }
+}
+
+#[derive(Debug)]
+#[derive(Default)]
 pub struct Floret {
     sinepos_method: SinePositivizingMethods,
     backward: bool,
     spines: i32,
     spine_radius: f64,
-    twirl_base: f64,
-    twirl_speed: f64,
-    twirl_amp: f64,
-    twirl_mod: f64,
-    twirl_method: TwirlMethods,
+    twirl: Twirl,
+}
+impl Distribution<Floret> for Standard {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Floret {
+        let mut floret = Floret{
+            sinepos_method: rand::random(),
+            backward: rng.gen_range(0..2) == 0,
+            spines: rng.gen_range(0..=15) + 1,
+            spine_radius: rng.gen_range(0.0..=0.5),
+            twirl: rand::random(),
+        };
+        if let SinePositivizingMethods::SineAbsoluteMethod = floret.sinepos_method {
+            if floret.spines % 2 == 1 {
+                floret.spines += 1;
+            }
+        }
+        floret
+    }
 }
 
 #[derive(Debug)]
 pub struct SpinflakeParams {
-    origin_h: f64,
-    origin_v: f64,
+    origin: super::GeneratorPoint,
     radius: f64,
     squish: f64,
     twist: f64,
     average_florets: bool,
-    florets: i32,
     layer: Vec<Floret>,
+}
+impl SpinflakeParams {
+    const MAX_FLORETS: usize = 3;
 }
 impl Default for SpinflakeParams {
     fn default() -> Self {
         SpinflakeParams {
             layer: (0..1).map(|_| {
-                Floret{
-                    sinepos_method: SinePositivizingMethods::DEFAULT,
-                    backward: false,
-                    spines: 1,
-                    spine_radius: 0.0,
-                    twirl_base: 0.0,
-                    twirl_method: TwirlMethods::DEFAULT,
-                    twirl_speed: 0.0,
-                    twirl_amp: 0.0,
-                    twirl_mod: 0.0,
-                }
+                Default::default()
             }).collect(), ..Default::default()
         }
     }
 }
-impl SpinflakeParams {
-    pub fn random() -> Self {
-        let mut rng = game::get_rng();
-
-        let florets = rng.gen_range(0..=(MAX_FLORETS as i32)) + 1;
-        let params = SpinflakeParams {
-            origin_h: rng.gen_range(0.0..=1.0),
-            origin_v: rng.gen_range(0.0..=1.0),
+impl Distribution<SpinflakeParams> for Standard {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> SpinflakeParams {
+        SpinflakeParams {
+            origin: rand::random(),
             radius: rng.gen_range(0.0..=1.0),
             squish: rng.gen_range(0.0..=2.75) * 0.25,
             twist: rng.gen_range(0.0..=std::f64::consts::PI),
             average_florets: rng.gen_range(0..2) == 0,
-            florets: florets,
-            layer: (0..florets).map(|_| {
-                let mut floret = Floret{
-                    sinepos_method: rand::random(),
-                    backward: rng.gen_range(0..2) == 0,
-                    spines: rng.gen_range(0..=15) + 1,
-                    spine_radius: rng.gen_range(0.0..=0.5),
-                    twirl_base: rng.gen_range(0.0..=std::f64::consts::PI),
-                    twirl_method: rand::random(),
-                    twirl_speed: 0.0,
-                    twirl_amp: 0.0,
-                    twirl_mod: 0.0,
-                };
-                if let SinePositivizingMethods::SineAbsoluteMethod = floret.sinepos_method {
-                    if floret.spines % 2 == 1 {
-                        floret.spines += 1;
-                    }
-                }
-                match floret.twirl_method {
-                    TwirlMethods::TwirlSineMethod => {
-                        floret.twirl_speed = rng.gen_range(0.0..=(MAX_TWIRL * std::f64::consts::PI));
-                        floret.twirl_amp = rng.gen_range(-MAX_SINEAMP..=MAX_SINEAMP);
-                        floret.twirl_mod = rng.gen_range(-0.5..=0.5);
-                    },
-                    TwirlMethods::TwirlCurveMethod => {
-                        floret.twirl_speed = rng.gen_range(-MAX_TWIRL..=MAX_TWIRL);
-                        floret.twirl_amp = rng.gen_range(-MAX_SINEAMP..=MAX_SINEAMP);
-                    },
-                    _ => {},
-                }
-                floret
+            layer: (0..rng.gen_range(0..=(SpinflakeParams::MAX_FLORETS as i32)) + 1).map(|_| {
+                rand::random()
             }).collect(),
-        };
-
-        params
+        }
     }
 }
 
-pub fn generate(x: f64, y: f64, params: &SpinflakeParams) -> f64 {
-    let point = vtiledpoint(x, y, params);
-    if x > 0.5 {
-        let farpoint = vtiledpoint(x - 1.0, y, params);
-        let farweight = (x - 0.5) * 2.0;
+pub fn generate(pixel: super::GeneratorPoint, params: &SpinflakeParams) -> f64 {
+    let val = vtiledpoint(pixel.x, pixel.y, params);
+    if pixel.x > 0.5 {
+        let farpoint = vtiledpoint(pixel.x - 1.0, pixel.y, params);
+        let farweight = (pixel.x - 0.5) * 2.0;
         let weight = 1.0 - farweight;
-        return (point * weight) + (farpoint * farweight);
+        return (val * weight) + (farpoint * farweight);
     }
-    point
+    val
 }
 
 fn chopsin(theta: f64, params: &Floret) -> f64 {
@@ -218,8 +215,8 @@ fn rawpoint(x: f64, y: f64, params: &SpinflakeParams) -> f64 {
     the sides of the squished spinflake point in random directions - not just aligned
     with the cartesian axes.
     */
-    let x = x - params.origin_h;
-    let y = y - params.origin_v;
+    let x = x - params.origin.x;
+    let y = y - params.origin.y;
 
     let hypangle = (y / x).atan() + params.twist;
     let origindist = x.hypot(y);
@@ -238,7 +235,7 @@ fn rawpoint(x: f64, y: f64, params: &SpinflakeParams) -> f64 {
             edgedist += calcwave(pointangle, origindist, &layer);
         }
         let edgedist =
-            if params.average_florets {edgedist / (params.florets as f64)} else {edgedist};
+            if params.average_florets {edgedist / (params.layer.len() as f64)} else {edgedist};
         //Our return value is the distance from the edge, proportionate
         //to the distance from the origin to the edge.
         let proportiondist = ((edgedist - origindist) / edgedist) as f64;
@@ -261,12 +258,12 @@ fn calcwave(theta: f64, dist: f64, params: &Floret) -> f64 {
     can get really interesting. If it doesn't work, migrate the twirl back
     to the spinflake instead.
     */
-    let cosparam = match params.twirl_method {
-        TwirlMethods::TwirlCurveMethod => theta * (params.spines as f64) + params.twirl_base
-            + (dist * (params.twirl_speed + (dist * params.twirl_amp))),
-        TwirlMethods::TwirlSineMethod => (theta * (params.spines as f64) + params.twirl_base)
-            + ((dist * params.twirl_speed).sin() * (params.twirl_amp + (dist * params.twirl_amp))),
-        _ => theta * (params.spines as f64) + params.twirl_base,
+    let cosparam = match params.twirl.method {
+        TwirlMethods::TwirlCurveMethod => theta * (params.spines as f64) + params.twirl.base
+            + (dist * (params.twirl.speed + (dist * params.twirl.amp))),
+        TwirlMethods::TwirlSineMethod => (theta * (params.spines as f64) + params.twirl.base)
+            + ((dist * params.twirl.speed).sin() * (params.twirl.amp + (dist * params.twirl.amp))),
+        _ => theta * (params.spines as f64) + params.twirl.base,
     };
     chopsin(cosparam, params) * params.spine_radius
 }

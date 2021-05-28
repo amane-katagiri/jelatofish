@@ -190,17 +190,25 @@ pub fn generate(
 #[derive(Default)]
 #[derive(Clone)]
 #[derive(Copy)]
-struct GeneratorPoint {
+pub struct GeneratorPoint {
     // must be 0.0..=1.0
     x: f64,
     y: f64,
 }
 impl GeneratorPoint {
-    fn new(x: f64, y: f64) -> Self {
+    pub fn new(x: f64, y: f64) -> Self {
         GeneratorPoint {
             x: x,
             y: y,
         }
+    }
+}
+impl Distribution<GeneratorPoint> for Standard {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> GeneratorPoint {
+        GeneratorPoint::new(
+            rng.gen_range(0.0..=1.0),
+            rng.gen_range(0.0..=1.0),
+        )
     }
 }
 
@@ -327,9 +335,9 @@ fn call_generator(
 ) -> f64 {
     match generator {
         Generators::Coswave
-            => coswave::generate(pixel.x, pixel.y, &params.coswave),
+            => coswave::generate(pixel, &params.coswave),
         Generators::Spinflake
-            => spinflake::generate(pixel.x, pixel.y, &params.spinflake),
+            => spinflake::generate(pixel, &params.spinflake),
         _ => test::generate(pixel.x, pixel.y),
     }
 }
