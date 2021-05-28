@@ -115,7 +115,6 @@ impl Jelatofish {
 
     pub fn random(
         size: types::Area,
-        params: &generators::GeneratorParams,
         colours: &ColourPalette,
         layer_count: Option<usize>,
         cutoff_threshold: Option<types::PixelVal>,
@@ -167,6 +166,7 @@ impl Jelatofish {
                         break fore;
                     }
                 };
+                let params: generators::GeneratorParams = rand::random();
                 ColourLayer {
                     image: generators::generate(size, &rand::random(), &params),
                     //Flip a coin. If it lands heads-up, create another layer for use as a mask.

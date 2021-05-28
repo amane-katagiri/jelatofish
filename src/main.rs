@@ -31,10 +31,9 @@ fn main() {
 }
 
 pub fn save_image(width: usize, height: usize, filename: &str) {
-    let params: jelatofish::generators::GeneratorParams = rand::random();
     let fish = jelatofish::Jelatofish::random(
         jelatofish::types::Area::new(width, height),
-        &params, &Default::default(), None, None
+        &Default::default(), None, None
     ).unwrap();
     let mut imgbuf = image::ImageBuffer::new(width as u32, height as u32);
 
