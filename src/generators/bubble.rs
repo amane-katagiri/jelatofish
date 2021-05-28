@@ -26,9 +26,6 @@ use rand::{
     Rng,
 };
 
-const MAX_BUBBLES: usize = 32;
-const MIN_BUBBLES: usize = MAX_BUBBLES / 4;
-
 #[derive(Debug)]
 #[derive(Default)]
 struct BoundingBox {
@@ -118,10 +115,14 @@ pub struct BubbleParams {
     angle: Range,
     bubbles: Vec<Bubble>,
 }
+impl BubbleParams {
+    const MAX_BUBBLES: usize = 32;
+    const MIN_BUBBLES: usize = BubbleParams::MAX_BUBBLES / 4;
+}
 impl Default for BubbleParams {
     fn default() -> Self {
         BubbleParams {
-            bubbles: (0..MIN_BUBBLES).map(|_| {
+            bubbles: (0..BubbleParams::MIN_BUBBLES).map(|_| {
                 Default::default()
             }).collect(), ..Default::default()
         }
@@ -144,9 +145,10 @@ impl Distribution<BubbleParams> for Standard {
             0.0..std::f64::consts::PI / 2.0,
             0.0..std::f64::consts::PI / 2.0,
         );
-        let bubbles = (0..rng.gen_range(MIN_BUBBLES..MAX_BUBBLES)).map(|_| {
-            Bubble::random(&scale, &squish, &angle)
-        }).collect();
+        let bubbles = (0..rng.gen_range(BubbleParams::MIN_BUBBLES..BubbleParams::MAX_BUBBLES))
+            .map(|_| {
+                Bubble::random(&scale, &squish, &angle)
+            }).collect();
         BubbleParams {
             scale: scale,
             squish: squish,
