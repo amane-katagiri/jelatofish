@@ -31,10 +31,7 @@ fn main() {
 }
 
 pub fn save_image(width: usize, height: usize, filename: &str) {
-    let params = jelatofish::generators::GeneratorParams {
-        coswave: jelatofish::generators::coswave::CoswaveParams::random(),
-        spinflake: jelatofish::generators::spinflake::SpinflakeParams::random(),
-    };
+    let params: jelatofish::generators::GeneratorParams = rand::random();
     let fish = jelatofish::Jelatofish::random(
         jelatofish::types::Area::new(width, height),
         &params, &Default::default(), None, None
