@@ -49,9 +49,10 @@ pub enum Generators {
 }
 impl Distribution<Generators> for Standard {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Generators {
-        match rng.gen_range(0..=1) {
+        match rng.gen_range(0..=2) {
             0 => Generators::Coswave,
-            _ => Generators::Spinflake,
+            1 => Generators::Spinflake,
+            _ => Generators::Bubble,
         }
     }
 }

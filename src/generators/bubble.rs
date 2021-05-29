@@ -28,21 +28,6 @@ use rand::{
 
 #[derive(Debug)]
 #[derive(Default)]
-struct BoundingBox {
-    top_left: super::GeneratorPoint,
-    right_bottom: super::GeneratorPoint,
-}
-impl BoundingBox {
-    fn new(left: f64, top: f64, right: f64, bottom: f64) -> Self {
-        BoundingBox {
-            top_left: super::GeneratorPoint::new(left, top),
-            right_bottom: super::GeneratorPoint::new(right, bottom),
-        }
-    }
-}
-
-#[derive(Debug)]
-#[derive(Default)]
 struct Range {
     min: f64,
     max: f64,
@@ -86,8 +71,6 @@ pub struct Bubble {
     angle: f64,
     //coordinates for the origin of the bubble
     origin: super::GeneratorPoint,
-    //approximate bounding box for the circle
-    bound: BoundingBox,
 }
 impl Bubble {
     fn random(scale: &Range, squish: &Range, angle: &Range) -> Self {
@@ -98,12 +81,6 @@ impl Bubble {
             squish: squish.sample(),
             angle: angle.sample(),
             origin: origin,
-            bound: BoundingBox::new(
-                origin.x - scale,
-                origin.y - scale,
-                origin.x + scale,
-                origin.y + scale,
-            )
         }
     }
 }
