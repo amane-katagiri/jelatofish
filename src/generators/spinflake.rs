@@ -147,9 +147,8 @@ impl SpinflakeParams {
 impl Default for SpinflakeParams {
     fn default() -> Self {
         SpinflakeParams {
-            layer: (0..1).map(|_| {
-                Default::default()
-            }).collect(), ..Default::default()
+            layer: (0..1).map(|_| Default::default()).collect(),
+            ..Default::default()
         }
     }
 }
@@ -161,9 +160,8 @@ impl Distribution<SpinflakeParams> for Standard {
             squish: rng.gen_range(0.0..=2.75) * 0.25,
             twist: rng.gen_range(0.0..=std::f64::consts::PI),
             average_florets: rng.gen_range(0..2) == 0,
-            layer: (0..rng.gen_range(0..=(SpinflakeParams::MAX_FLORETS as i32)) + 1).map(|_| {
-                rand::random()
-            }).collect(),
+            layer: (0..rng.gen_range(0..=(SpinflakeParams::MAX_FLORETS as i32)) + 1)
+                .map(|_| rand::random()).collect(),
         }
     }
 }

@@ -99,9 +99,8 @@ impl BubbleParams {
 impl Default for BubbleParams {
     fn default() -> Self {
         BubbleParams {
-            bubbles: (0..BubbleParams::MIN_BUBBLES).map(|_| {
-                Default::default()
-            }).collect(), ..Default::default()
+            bubbles: (0..BubbleParams::MIN_BUBBLES).map(|_| Default::default()).collect(),
+            ..Default::default()
         }
     }
 }
@@ -123,9 +122,7 @@ impl Distribution<BubbleParams> for Standard {
             0.0..std::f64::consts::PI / 2.0,
         );
         let bubbles = (0..rng.gen_range(BubbleParams::MIN_BUBBLES..BubbleParams::MAX_BUBBLES))
-            .map(|_| {
-                Bubble::random(&scale, &squish, &angle)
-            }).collect();
+            .map(|_| Bubble::random(&scale, &squish, &angle)).collect();
         BubbleParams {
             scale: scale,
             squish: squish,
@@ -180,9 +177,7 @@ fn get_all_bubbles_value(pixel: super::GeneratorPoint, params: &BubbleParams) ->
     We just scan through the list, compare the point with each bubble,
     and return the best match we can find.
     */
-    params.bubbles.iter().map(|bubble| {
-        get_one_bubble_value(pixel, bubble)
-    }).fold(0.0/0.0, f64::max)
+    params.bubbles.iter().map(|bubble| get_one_bubble_value(pixel, bubble)).fold(0.0/0.0, f64::max)
 }
 
 fn get_one_bubble_value(pixel: super::GeneratorPoint, params: &Bubble) -> f64 {

@@ -190,15 +190,13 @@ pub fn generate(
     );
 
     vec![vec![0 as f64; size.width]; size.height].iter().enumerate().map(
-        |(y, line)| {
+        |(y, line)|
             line.iter().enumerate().map(
-                |(x, _)| {
+                |(x, _)|
                     f64::min(1.0, f64::max(0.0, get_layer_pixel(
                         types::PixelPoint::new(x, y), size, roll, generator, &params
                     ).unwrap()))
-                }
             ).collect()
-        }
     ).collect()
 }
 
