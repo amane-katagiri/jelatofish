@@ -22,49 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 use jelatofish;
 
-use std::path::Path;
-use image;
-
 fn main() {
     save_fish_image(256, 256, "image.png");
 }
 
-pub fn save_test_image(
-    width: usize, height: usize, generator: jelatofish::generators::Generators, filename: &str
-) {
-    let image = jelatofish::generators::generate(
-        jelatofish::types::Area::new(width, height),
-        &generator, &rand::random()
-    );
-    let mut imgbuf = image::ImageBuffer::new(width as u32, height as u32);
-
-    const MAX_CHANVAL: f64 = 255.0;
-    for (x, y, pixel) in imgbuf.enumerate_pixels_mut() {
-        let p = image[x as usize][y as usize];
-        *pixel = image::Rgb([
-            (p * MAX_CHANVAL) as u8,
-            (p * MAX_CHANVAL) as u8,
-            (p * MAX_CHANVAL) as u8,
-        ]);
-    }
-    imgbuf.save(&Path::new(filename)).unwrap();
-}
-
-pub fn save_fish_image(width: usize, height: usize, filename: &str) {
-    let fish = jelatofish::Jelatofish::random(
-        jelatofish::types::Area::new(width, height),
-        &Default::default(), None, None
-    ).unwrap();
-    let mut imgbuf = image::ImageBuffer::new(width as u32, height as u32);
-
-    const MAX_CHANVAL: f64 = 255.0;
-    for (x, y, pixel) in imgbuf.enumerate_pixels_mut() {
-        let p = fish.get_pixel_val(x as usize, y as usize).unwrap();
-        *pixel = image::Rgb([
-            (p.red * MAX_CHANVAL) as u8,
-            (p.blue * MAX_CHANVAL) as u8,
-            (p.green * MAX_CHANVAL) as u8,
-        ]);
-    }
-    imgbuf.save(&Path::new(filename)).unwrap();
-}
