@@ -45,15 +45,17 @@ pub enum Generators {
     //The range fractal, which creates mountainous organic rough textures.
     Rangefrac,
     //The flatwave generator, which creates interfering linear waves.
+    Flatwave,
     //Bubble generator, which creates lumpy, curved turbulences.
     Bubble,
 }
 impl Distribution<Generators> for Standard {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Generators {
-        match rng.gen_range(0..=3) {
+        match rng.gen_range(0..=4) {
             0 => Generators::Coswave,
             1 => Generators::Spinflake,
             2 => Generators::Rangefrac,
+            3 => Generators::Flatwave,
             _ => Generators::Bubble,
         }
     }
@@ -79,6 +81,10 @@ impl GeneratorProperty {
                 is_anti_aliased: true,
                 is_seamless: true,
             },
+            Generators::Flatwave => GeneratorProperty {
+                is_anti_aliased: false,
+                is_seamless: false,
+            },
             Generators::Bubble => GeneratorProperty {
                 is_anti_aliased: true,
                 is_seamless: true,
@@ -99,16 +105,18 @@ impl GeneratorProperty {
 pub struct GeneratorParams {
     pub coswave: coswave::CoswaveParams,
     pub spinflake: spinflake::SpinflakeParams,
-    pub bubble: bubble::BubbleParams,
     pub rangefrac: rangefrac::RangefracParams,
+    pub flatwave: flatwave::FlatwaveParams,
+    pub bubble: bubble::BubbleParams,
 }
 impl Distribution<GeneratorParams> for Standard {
     fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> GeneratorParams {
         GeneratorParams {
             coswave: rand::random(),
             spinflake: rand::random(),
-            bubble: rand::random(),
             rangefrac: rand::random(),
+            flatwave: rand::random(),
+            bubble: rand::random(),
         }
     }
 }
@@ -360,10 +368,12 @@ fn call_generator(
             => coswave::generate(pixel, &params.coswave),
         Generators::Spinflake
             => spinflake::generate(pixel, &params.spinflake),
-        Generators::Bubble
-            => bubble::generate(pixel, &params.bubble),
         Generators::Rangefrac
             => rangefrac::generate(pixel, &params.rangefrac),
+        Generators::Flatwave
+            => flatwave::generate(pixel, &params.flatwave),
+        Generators::Bubble
+            => bubble::generate(pixel, &params.bubble),
         _ => test::generate(pixel.x, pixel.y),
     }
 }
