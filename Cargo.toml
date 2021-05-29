@@ -2,10 +2,18 @@
 name = "jelatofish"
 version = "0.1.0"
 authors = ["Amane Katagiri <amane@ama.ne.jp>"]
+description = "Yet another random image generator for wallpaper or avatar inspired by xstarfish. "
+license = "GPL-2.0"
+repository = "https://github.com/amane-katagiri/jelatofish"
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[lib]
+crate-type = ["cdylib", "rlib"]
+
 [dependencies]
+wasm-bindgen = "0.2"
 image = "0.23.14"
 rand = { version = "0.8.0", features = ["small_rng"] }
+getrandom = { version = "0.2", features = ["js"] }

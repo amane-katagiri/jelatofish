@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+ <head>
+   <meta charset="utf-8">
+   <title>Hello jelatofish!</title>
+ </head>
+ <body>
+   <img id="fish_image">
+   <!-- Note the usage of `type=module` here as this is an ES6 module -->
+   <script type="module">
+     import init, * as wasm from "./pkg/jelatofish.js";
+     async function run() {
+       await init();
+       var buffer = wasm.new_fish_image();
+       // create off-screen canvas element
+       var canvas = document.createElement("canvas"),
+           ctx = canvas.getContext("2d");
+
+       canvas.width = 256;
+       canvas.height = 256;
+
+       // create imageData object
+       var idata = ctx.createImageData(256, 256);
+
+       // set our buffer as source
+       idata.data.set(buffer);
+
+       // update canvas with new data
+       ctx.putImageData(idata, 0, 0);
+       var dataUri = canvas.toDataURL();
+       document.body.style.backgroundRepeat = "repeat";
+       document.body.style.backgroundImage = dataUri;
+       fish_image.src = dataUri;
+     }
+     run();
+   </script>
+ </body>
+</html>

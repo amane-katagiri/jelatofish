@@ -20,10 +20,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
+extern crate wasm_bindgen;
+
 pub mod generators;
 pub mod types;
 pub mod game;
 
+use wasm_bindgen::prelude::*;
 use rand::{
     Rng,
     distributions::{Distribution, Standard},
@@ -263,19 +266,28 @@ impl Jelatofish {
     }
 }
 
-pub fn new_fish_image(width: usize, height: usize) {
+#[wasm_bindgen]
+pub fn new_fish_image() -> Box<[u8]> {
+    let width = 256;
+    let height = 256;
     let fish = Jelatofish::random(
         types::Area::new(width, height),
         &Default::default(), None, None
     ).unwrap();
     const MAX_CHANVAL: f64 = 255.0;
 
-    let _: Vec<Vec<Colour>> = vec![vec![0 as f64; width]; height].iter().enumerate().map(
-        |(y, line)|
-            line.iter().enumerate().map(
-                |(x, _)| fish.get_pixel_val(x as usize, y as usize).unwrap().scale(MAX_CHANVAL)
-            ).collect()
-    ).collect();
+    let image: Vec<u8> = vec![vec![0 as f64; width]; height].iter().enumerate().map(
+        |(y, line)| {
+            let line: Vec<u8> = line.iter().enumerate().map(
+                |(x, _)| {
+                    let p = fish.get_pixel_val(x as usize, y as usize).unwrap().scale(MAX_CHANVAL);
+                    vec![p.red as u8, p.green as u8, p.blue as u8, 255]
+                }
+            ).flatten().collect();
+            line
+        }
+    ).flatten().collect();
+    image.into_boxed_slice()
 }
 
 pub fn save_test_image(
