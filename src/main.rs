@@ -26,11 +26,31 @@ use std::path::Path;
 use image;
 
 fn main() {
-    save_image(256, 256, "image.png");
-    println!("Hello, world!");
+    save_fish_image(256, 256, "image.png");
 }
 
-pub fn save_image(width: usize, height: usize, filename: &str) {
+pub fn save_test_image(
+    width: usize, height: usize, generator: jelatofish::generators::Generators, filename: &str
+) {
+    let image = jelatofish::generators::generate(
+        jelatofish::types::Area::new(width, height),
+        &generator, &rand::random()
+    );
+    let mut imgbuf = image::ImageBuffer::new(width as u32, height as u32);
+
+    const MAX_CHANVAL: f64 = 255.0;
+    for (x, y, pixel) in imgbuf.enumerate_pixels_mut() {
+        let p = image[x as usize][y as usize];
+        *pixel = image::Rgb([
+            (p * MAX_CHANVAL) as u8,
+            (p * MAX_CHANVAL) as u8,
+            (p * MAX_CHANVAL) as u8,
+        ]);
+    }
+    imgbuf.save(&Path::new(filename)).unwrap();
+}
+
+pub fn save_fish_image(width: usize, height: usize, filename: &str) {
     let fish = jelatofish::Jelatofish::random(
         jelatofish::types::Area::new(width, height),
         &Default::default(), None, None
