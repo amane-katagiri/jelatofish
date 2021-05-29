@@ -28,8 +28,8 @@ use rand::{
 #[derive(Debug)]
 pub enum WaveAccelMethods {
     DEFAULT,
-    AccelNone,
-    AccelLinear,
+    None,
+    Linear,
 }
 impl Default for WaveAccelMethods {
     fn default() -> Self {
@@ -87,10 +87,10 @@ impl Distribution<CoswaveParams> for Standard {
         shines through here and there. It's quite beautiful in an abstract sort of way.
         */
         if rng.gen_range(0..64) == 0 {
-            params.accel_method = WaveAccelMethods::AccelLinear;
+            params.accel_method = WaveAccelMethods::Linear;
             params.accel = rng.gen_range(0.0..=2.0) + 1.0;
         } else {
-            params.accel_method = WaveAccelMethods::AccelNone;
+            params.accel_method = WaveAccelMethods::None;
         }
         /*
         Packmethods flipsign and truncate effectively double the wavescale,
@@ -121,7 +121,7 @@ pub fn generate(pixel: super::GeneratorPoint, params: &CoswaveParams) -> f64 {
     let hypotenuse = (x * params.squish).hypot(y / params.squish);
     //Scale the wavescale according to our accelerator function.
     let compwavescale = match params.accel_method {
-        WaveAccelMethods::AccelNone => params.wave_scale,
+        WaveAccelMethods::None => params.wave_scale,
         _ => params.wave_scale.powf(hypotenuse * params.accel),
     };
     let rawcos = super::packed_cos(hypotenuse, compwavescale, &params.pack_method);

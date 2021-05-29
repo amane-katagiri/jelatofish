@@ -28,18 +28,18 @@ use rand::{
 #[derive(Debug)]
 pub enum SinePositivizingMethods {
     DEFAULT,
-    SineCompressMethod,
-    SineTruncateMethod,
-    SineAbsoluteMethod,
-    SineSawbladeMethod,
+    CompressMethod,
+    TruncateMethod,
+    AbsoluteMethod,
+    SawbladeMethod,
 }
 impl Distribution<SinePositivizingMethods> for Standard {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> SinePositivizingMethods {
         match rng.gen_range(0..=3) {
-            0 => SinePositivizingMethods::SineCompressMethod,
-            1 => SinePositivizingMethods::SineTruncateMethod,
-            2 => SinePositivizingMethods::SineAbsoluteMethod,
-            _ => SinePositivizingMethods::SineSawbladeMethod,
+            0 => SinePositivizingMethods::CompressMethod,
+            1 => SinePositivizingMethods::TruncateMethod,
+            2 => SinePositivizingMethods::AbsoluteMethod,
+            _ => SinePositivizingMethods::SawbladeMethod,
         }
     }
 }
@@ -52,16 +52,16 @@ impl Default for SinePositivizingMethods {
 #[derive(Debug)]
 pub enum TwirlMethods {
     DEFAULT,
-    TwirlNoneMethod,
-    TwirlCurveMethod,
-    TwirlSineMethod,
+    NoneMethod,
+    CurveMethod,
+    SineMethod,
 }
 impl Distribution<TwirlMethods> for Standard {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> TwirlMethods {
         match rng.gen_range(0..=2) {
-            0 => TwirlMethods::TwirlNoneMethod,
-            1 => TwirlMethods::TwirlCurveMethod,
-            _ => TwirlMethods::TwirlSineMethod,
+            0 => TwirlMethods::NoneMethod,
+            1 => TwirlMethods::CurveMethod,
+            _ => TwirlMethods::SineMethod,
         }
     }
 }
@@ -91,11 +91,11 @@ impl Distribution<Twirl> for Standard {
             ..Default::default()
         };
         match twirl.method {
-            TwirlMethods::TwirlSineMethod => {
+            TwirlMethods::SineMethod => {
                 twirl.speed = rng.gen_range(0.0..=(Twirl::MAX_TWIRL * std::f64::consts::PI));
                 twirl.amp = rng.gen_range(-Twirl::MAX_SINEAMP..=Twirl::MAX_SINEAMP);
             },
-            TwirlMethods::TwirlCurveMethod => {
+            TwirlMethods::CurveMethod => {
                 twirl.speed = rng.gen_range(-Twirl::MAX_TWIRL..=Twirl::MAX_TWIRL);
                 twirl.amp = rng.gen_range(-Twirl::MAX_SINEAMP..=Twirl::MAX_SINEAMP);
             },
@@ -123,7 +123,7 @@ impl Distribution<Floret> for Standard {
             spine_radius: rng.gen_range(0.0..=0.5),
             twirl: rand::random(),
         };
-        if let SinePositivizingMethods::SineAbsoluteMethod = floret.sinepos_method {
+        if let SinePositivizingMethods::AbsoluteMethod = floret.sinepos_method {
             if floret.spines % 2 == 1 {
                 floret.spines += 1;
             }
@@ -180,10 +180,10 @@ pub fn generate(pixel: super::GeneratorPoint, params: &SpinflakeParams) -> f64 {
 fn chopsin(theta: f64, params: &Floret) -> f64 {
     let out = theta.sin();
     let out = match params.sinepos_method {
-        SinePositivizingMethods::SineCompressMethod =>(out + 1.0) / 2.0,
-        SinePositivizingMethods::SineAbsoluteMethod => out.abs(),
-        SinePositivizingMethods::SineTruncateMethod => if out < 0.0 {out + 1.0} else {out},
-        SinePositivizingMethods::SineSawbladeMethod => {
+        SinePositivizingMethods::CompressMethod =>(out + 1.0) / 2.0,
+        SinePositivizingMethods::AbsoluteMethod => out.abs(),
+        SinePositivizingMethods::TruncateMethod => if out < 0.0 {out + 1.0} else {out},
+        SinePositivizingMethods::SawbladeMethod => {
             let theta = theta / 4.0 % std::f64::consts::PI / 2.0;
             let theta = if theta < 0.0 {theta + (std::f64::consts::PI / 2.0)} else {theta};
             theta.sin()
@@ -257,9 +257,9 @@ fn calcwave(theta: f64, dist: f64, params: &Floret) -> f64 {
     to the spinflake instead.
     */
     let cosparam = match params.twirl.method {
-        TwirlMethods::TwirlCurveMethod => theta * (params.spines as f64) + params.twirl.base
+        TwirlMethods::CurveMethod => theta * (params.spines as f64) + params.twirl.base
             + (dist * (params.twirl.speed + (dist * params.twirl.amp))),
-        TwirlMethods::TwirlSineMethod => (theta * (params.spines as f64) + params.twirl.base)
+        TwirlMethods::SineMethod => (theta * (params.spines as f64) + params.twirl.base)
             + ((dist * params.twirl.speed).sin() * (params.twirl.amp + (dist * params.twirl.amp))),
         _ => theta * (params.spines as f64) + params.twirl.base,
     };
