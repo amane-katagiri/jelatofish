@@ -43,15 +43,17 @@ pub enum Generators {
     //Next is the spinflake generator, for more shapely patterns.
     Spinflake,
     //The range fractal, which creates mountainous organic rough textures.
+    Rangefrac,
     //The flatwave generator, which creates interfering linear waves.
     //Bubble generator, which creates lumpy, curved turbulences.
     Bubble,
 }
 impl Distribution<Generators> for Standard {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Generators {
-        match rng.gen_range(0..=2) {
+        match rng.gen_range(0..=3) {
             0 => Generators::Coswave,
             1 => Generators::Spinflake,
+            2 => Generators::Rangefrac,
             _ => Generators::Bubble,
         }
     }
@@ -71,6 +73,10 @@ impl GeneratorProperty {
             },
             Generators::Spinflake => GeneratorProperty {
                 is_anti_aliased: false,
+                is_seamless: true,
+            },
+            Generators::Rangefrac => GeneratorProperty {
+                is_anti_aliased: true,
                 is_seamless: true,
             },
             Generators::Bubble => GeneratorProperty {
@@ -94,6 +100,7 @@ pub struct GeneratorParams {
     pub coswave: coswave::CoswaveParams,
     pub spinflake: spinflake::SpinflakeParams,
     pub bubble: bubble::BubbleParams,
+    pub rangefrac: rangefrac::RangefracParams,
 }
 impl Distribution<GeneratorParams> for Standard {
     fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> GeneratorParams {
@@ -101,6 +108,7 @@ impl Distribution<GeneratorParams> for Standard {
             coswave: rand::random(),
             spinflake: rand::random(),
             bubble: rand::random(),
+            rangefrac: rand::random(),
         }
     }
 }
@@ -354,6 +362,8 @@ fn call_generator(
             => spinflake::generate(pixel, &params.spinflake),
         Generators::Bubble
             => bubble::generate(pixel, &params.bubble),
+        Generators::Rangefrac
+            => rangefrac::generate(pixel, &params.rangefrac),
         _ => test::generate(pixel.x, pixel.y),
     }
 }
