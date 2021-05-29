@@ -49,6 +49,14 @@ impl Colour {
             alpha: alpha,
         }
     }
+    pub fn scale(&self, factor: f64) -> Colour {
+        Colour::new(
+            self.red * factor,
+            self.green * factor,
+            self.blue * factor,
+            self.alpha * factor,
+        )
+    }
 }
 impl Distribution<Colour> for Standard {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Colour {
@@ -255,19 +263,19 @@ impl Jelatofish {
     }
 }
 
-pub fn new_fish_image(width: usize, height: usize) -> Vec<Vec<Colour>> {
+pub fn new_fish_image(width: usize, height: usize) {
     let fish = Jelatofish::random(
         types::Area::new(width, height),
         &Default::default(), None, None
     ).unwrap();
     const MAX_CHANVAL: f64 = 255.0;
 
-    vec![vec![0 as f64; width]; height].iter().enumerate().map(
+    let _: Vec<Vec<Colour>> = vec![vec![0 as f64; width]; height].iter().enumerate().map(
         |(y, line)|
             line.iter().enumerate().map(
-                |(x, _)| fish.get_pixel_val(x as usize, y as usize).unwrap()
+                |(x, _)| fish.get_pixel_val(x as usize, y as usize).unwrap().scale(MAX_CHANVAL)
             ).collect()
-    ).collect()
+    ).collect();
 }
 
 pub fn save_test_image(
@@ -300,11 +308,11 @@ pub fn save_fish_image(width: usize, height: usize, filename: &str) {
 
     const MAX_CHANVAL: f64 = 255.0;
     for (x, y, pixel) in imgbuf.enumerate_pixels_mut() {
-        let p = fish.get_pixel_val(x as usize, y as usize).unwrap();
+        let p = fish.get_pixel_val(x as usize, y as usize).unwrap().scale(MAX_CHANVAL);
         *pixel = image::Rgb([
-            (p.red * MAX_CHANVAL) as u8,
-            (p.blue * MAX_CHANVAL) as u8,
-            (p.green * MAX_CHANVAL) as u8,
+            p.red as u8,
+            p.blue as u8,
+            p.green as u8,
         ]);
     }
     imgbuf.save(&Path::new(filename)).unwrap();
