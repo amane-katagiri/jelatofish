@@ -7,10 +7,7 @@ Yet another random image generator for wallpaper or avatar inspired by xstarfish
 1. Build wasm
 
 ```bash
-mkdir -p ./build
-wasm-pack build --target web
-cp web/html/index.html ./build/
-cp -r ./pkg/ ./build/
+cargo make html
 ```
 
 1. Run nginx docker container

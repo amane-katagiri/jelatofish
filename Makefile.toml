@@ -1,0 +1,30 @@
+[tasks.html]
+description = "wasmを実行するhtmlファイル群を生成する"
+script = [
+'''
+#!/bin/bash
+mkdir -p ./build
+rm -rf ./build/*
+cp web/html/index.html ./build/
+cp -r ./pkg/ ./build/
+'''
+]
+dependencies = ["wasm"]
+
+[tasks.wasm]
+description = "web向けのwasmにコンパイルする"
+command = "wasm-pack"
+args = ["build", "--target", "web"]
+
+[tasks.clean]
+command = "cargo"
+args = ["clean"]
+
+[tasks.release]
+command = "cargo"
+args = ["build", "--release"]
+dependencies = ["clean"]
+
+[tasks.run]
+command = "cargo"
+args = ["run"]
