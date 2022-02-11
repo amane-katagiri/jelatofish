@@ -26,16 +26,14 @@ use rand::{
 };
 
 #[derive(Debug)]
+#[derive(Default)]
 pub enum WaveAccelMethods {
+    #[default]
     DEFAULT,
     None,
     Linear,
 }
-impl Default for WaveAccelMethods {
-    fn default() -> Self {
-        WaveAccelMethods::DEFAULT
-    }
-}
+
 
 #[derive(Debug)]
 #[derive(Default)]

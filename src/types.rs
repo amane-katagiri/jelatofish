@@ -36,8 +36,8 @@ pub struct Area {
 impl Area {
     pub fn new(width: usize, height: usize) -> Self {
         Area {
-            width: width,
-            height: height,
+            width,
+            height,
         }
     }
 }
@@ -53,8 +53,8 @@ pub struct PixelPoint {
 impl PixelPoint {
     pub fn new(x: usize, y: usize) -> Self {
         PixelPoint {
-            x: x,
-            y: y,
+            x,
+            y,
         }
     }
 }

@@ -36,8 +36,8 @@ struct Point {
 impl Point {
     pub fn new(x: i32, y: i32) -> Self {
         Point {
-            x: x,
-            y: y,
+            x,
+            y,
         }
     }
 }
@@ -81,11 +81,11 @@ impl Distribution<RangefracParams> for Standard {
         min and max. If the neighboring point exceeds min or max, use its
         value as the new min or max. Repeat.
         */
-        let mut level = [[0 as i32; RangefracParams::VALMATRIX_SIZE]; RangefracParams::VALMATRIX_SIZE];
+        let mut level = [[0_i32; RangefracParams::VALMATRIX_SIZE]; RangefracParams::VALMATRIX_SIZE];
         let mut data = [[0.0; RangefracParams::VALMATRIX_SIZE]; RangefracParams::VALMATRIX_SIZE];
 
         for step in 1..=RangefracParams::VALMATRIX_SCALE {
-            let step = (2 as usize).pow(RangefracParams::VALMATRIX_SCALE - step);
+            let step = (2_usize).pow(RangefracParams::VALMATRIX_SCALE - step);
             for x in (0..RangefracParams::VALMATRIX_SIZE).step_by(step) {
                 for y in (0..RangefracParams::VALMATRIX_SIZE).step_by(step) {
                     let step = step as i32;
@@ -113,11 +113,11 @@ impl Distribution<RangefracParams> for Standard {
                             (xi + step, yi + step),
                         ].iter().filter(|p| level[wrap_x(p.0)][wrap_y(p.1)] > step)
                             .map(|p| data[wrap_x(p.0)][wrap_y(p.1)]).collect();
-                        let max = if local_values.len() > 0 {
-                            local_values.iter().fold(0.0/0.0, |m, v| v.max(m))
+                        let max = if !local_values.is_empty() {
+                            local_values.iter().fold(f64::NAN, |m, v| v.max(m))
                         } else {0.0};
-                        let min = if local_values.len() > 0 {
-                            local_values.iter().fold(0.0/0.0, |m, v| v.min(m))
+                        let min = if !local_values.is_empty() {
+                            local_values.iter().fold(f64::NAN, |m, v| v.min(m))
                         } else {1.0};
                         let val = if min != max {
                             if min > max {
@@ -145,7 +145,7 @@ impl Distribution<RangefracParams> for Standard {
             }
         }
         RangefracParams {
-            data: data
+            data
         }
     }
 }

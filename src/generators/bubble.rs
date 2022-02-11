@@ -26,8 +26,7 @@ use rand::{
     Rng,
 };
 
-#[derive(Debug)]
-#[derive(Default)]
+#[derive(Debug, Default)]
 struct Range {
     min: f64,
     max: f64,
@@ -35,15 +34,9 @@ struct Range {
 impl Range {
     fn new(min: f64, max: f64) -> Self {
         if max > min {
-            return Range {
-                min: min,
-                max: max,
-            }
+            return Range { min, max };
         }
-        Range {
-            min: max,
-            max: min,
-        }
+        Range { max: min, min: max }
     }
 }
 impl Range {
@@ -60,8 +53,7 @@ impl Range {
     }
 }
 
-#[derive(Debug)]
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct Bubble {
     //by what factor should we shrink the influence of this bubble?
     scale: f64,
@@ -77,10 +69,10 @@ impl Bubble {
         let scale = scale.sample();
         let origin: super::GeneratorPoint = rand::random();
         Bubble {
-            scale: scale,
+            scale,
             squish: squish.sample(),
             angle: angle.sample(),
-            origin: origin,
+            origin,
         }
     }
 }
@@ -99,7 +91,9 @@ impl BubbleParams {
 impl Default for BubbleParams {
     fn default() -> Self {
         BubbleParams {
-            bubbles: (0..BubbleParams::MIN_BUBBLES).map(|_| Default::default()).collect(),
+            bubbles: (0..BubbleParams::MIN_BUBBLES)
+                .map(|_| Default::default())
+                .collect(),
             ..Default::default()
         }
     }
@@ -110,24 +104,37 @@ impl Distribution<BubbleParams> for Standard {
         let squish = Range::new(
             if game::maybe() {
                 let val = rng.gen_range(1.0..4.0);
-                if game::maybe() {val} else {1.0/val}
-            } else {1.0},
+                if game::maybe() {
+                    val
+                } else {
+                    1.0 / val
+                }
+            } else {
+                1.0
+            },
             if game::maybe() {
                 let val = rng.gen_range(1.0..4.0);
-                if game::maybe() {val} else {1.0/val}
-            } else {1.0},
+                if game::maybe() {
+                    val
+                } else {
+                    1.0 / val
+                }
+            } else {
+                1.0
+            },
         );
         let angle = Range::random(
             0.0..std::f64::consts::PI / 2.0,
             0.0..std::f64::consts::PI / 2.0,
         );
         let bubbles = (0..rng.gen_range(BubbleParams::MIN_BUBBLES..BubbleParams::MAX_BUBBLES))
-            .map(|_| Bubble::random(&scale, &squish, &angle)).collect();
+            .map(|_| Bubble::random(&scale, &squish, &angle))
+            .collect();
         BubbleParams {
-            scale: scale,
-            squish: squish,
-            angle: angle,
-            bubbles: bubbles,
+            scale,
+            squish,
+            angle,
+            bubbles,
         }
     }
 }
@@ -144,31 +151,35 @@ pub fn generate(pixel: super::GeneratorPoint, params: &BubbleParams) -> f64 {
     */
     [
         get_all_bubbles_value(pixel, params),
+        get_all_bubbles_value(super::GeneratorPoint::new(pixel.x + 1.0, pixel.y), params)
+            * (1.0 - pixel.x), //right
+        get_all_bubbles_value(super::GeneratorPoint::new(pixel.x - 1.0, pixel.y), params) * pixel.x, //left
+        get_all_bubbles_value(super::GeneratorPoint::new(pixel.x, pixel.y + 1.0), params)
+            * (1.0 - pixel.y), //bottom
+        get_all_bubbles_value(super::GeneratorPoint::new(pixel.x, pixel.y - 1.0), params) * pixel.y, //top
         get_all_bubbles_value(
-            super::GeneratorPoint::new(pixel.x + 1.0, pixel.y), params
-        ) * (1.0 - pixel.x), //right
+            super::GeneratorPoint::new(pixel.x + 1.0, pixel.y + 1.0),
+            params,
+        ) * (1.0 - pixel.x)
+            * (1.0 - pixel.y), //bottom right
         get_all_bubbles_value(
-            super::GeneratorPoint::new(pixel.x - 1.0, pixel.y), params
-        ) * pixel.x, //left
+            super::GeneratorPoint::new(pixel.x + 1.0, pixel.y - 1.0),
+            params,
+        ) * (1.0 - pixel.x)
+            * pixel.y, //top right
         get_all_bubbles_value(
-            super::GeneratorPoint::new(pixel.x, pixel.y + 1.0), params
-        ) * (1.0 - pixel.y), //bottom
+            super::GeneratorPoint::new(pixel.x - 1.0, pixel.y + 1.0),
+            params,
+        ) * pixel.x
+            * (1.0 - pixel.y), //bottom left
         get_all_bubbles_value(
-            super::GeneratorPoint::new(pixel.x, pixel.y - 1.0), params
-        ) * pixel.y, //top
-        get_all_bubbles_value(
-            super::GeneratorPoint::new(pixel.x + 1.0, pixel.y + 1.0), params
-        ) * (1.0 - pixel.x) * (1.0 - pixel.y), //bottom right
-        get_all_bubbles_value(
-            super::GeneratorPoint::new(pixel.x + 1.0, pixel.y - 1.0), params
-        ) * (1.0 - pixel.x) * pixel.y, //top right
-        get_all_bubbles_value(
-            super::GeneratorPoint::new(pixel.x - 1.0, pixel.y + 1.0), params
-        ) * pixel.x * (1.0 - pixel.y), //bottom left
-        get_all_bubbles_value(
-            super::GeneratorPoint::new(pixel.x - 1.0, pixel.y - 1.0), params
-        ) * pixel.x * pixel.y, //bottom right
-    ].iter().fold(0.0/0.0, |m, v| v.max(m))
+            super::GeneratorPoint::new(pixel.x - 1.0, pixel.y - 1.0),
+            params,
+        ) * pixel.x
+            * pixel.y, //bottom right
+    ]
+    .iter()
+    .fold(f64::NAN, |m, v| v.max(m))
 }
 
 fn get_all_bubbles_value(pixel: super::GeneratorPoint, params: &BubbleParams) -> f64 {
@@ -177,7 +188,11 @@ fn get_all_bubbles_value(pixel: super::GeneratorPoint, params: &BubbleParams) ->
     We just scan through the list, compare the point with each bubble,
     and return the best match we can find.
     */
-    params.bubbles.iter().map(|bubble| get_one_bubble_value(pixel, bubble)).fold(0.0/0.0, f64::max)
+    params
+        .bubbles
+        .iter()
+        .map(|bubble| get_one_bubble_value(pixel, bubble))
+        .fold(f64::NAN, f64::max)
 }
 
 fn get_one_bubble_value(pixel: super::GeneratorPoint, params: &Bubble) -> f64 {
@@ -202,7 +217,7 @@ fn get_one_bubble_value(pixel: super::GeneratorPoint, params: &Bubble) -> f64 {
     let transverse = hypangle.cos() * hypotenuse + params.origin.x;
     let distance = hypangle.sin() * hypotenuse + params.origin.y;
     //That's it. Pass in the transverse and distance values as the new h and v.
-    return get_squished_bubble_value(transverse, distance, params);
+    get_squished_bubble_value(transverse, distance, params)
 }
 
 fn get_squished_bubble_value(transverse: f64, distance: f64, params: &Bubble) -> f64 {
@@ -220,5 +235,5 @@ fn get_squished_bubble_value(transverse: f64, distance: f64, params: &Bubble) ->
     a number between zero and 1.
     */
     let hypotenuse = (transverse - params.origin.x).hypot(distance - params.origin.y);
-    return 1.0 - hypotenuse * hypotenuse / params.scale;
+    1.0 - hypotenuse * hypotenuse / params.scale
 }

@@ -22,21 +22,18 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 extern crate wasm_bindgen;
 
+pub mod game;
 pub mod generators;
 pub mod types;
-pub mod game;
 
-use wasm_bindgen::prelude::*;
 use rand::{
-    Rng,
     distributions::{Distribution, Standard},
+    Rng,
 };
 use std::path::Path;
+use wasm_bindgen::prelude::*;
 
-#[derive(Debug)]
-#[derive(Default)]
-#[derive(Clone)]
-#[derive(Copy)]
+#[derive(Debug, Default, Clone, Copy)]
 pub struct Colour {
     pub red: types::PixelVal,
     pub green: types::PixelVal,
@@ -44,12 +41,17 @@ pub struct Colour {
     pub alpha: types::PixelVal,
 }
 impl Colour {
-    pub fn new(red: types::PixelVal, green: types::PixelVal, blue: types::PixelVal, alpha: types::PixelVal) -> Self {
+    pub fn new(
+        red: types::PixelVal,
+        green: types::PixelVal,
+        blue: types::PixelVal,
+        alpha: types::PixelVal,
+    ) -> Self {
         Colour {
-            red: red,
-            green: green,
-            blue: blue,
-            alpha: alpha,
+            red,
+            green,
+            blue,
+            alpha,
         }
     }
     pub fn scale(&self, factor: f64) -> Colour {
@@ -72,8 +74,7 @@ impl Distribution<Colour> for Standard {
     }
 }
 
-#[derive(Debug)]
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct ColourPalette {
     pub colours: Vec<Colour>,
 }
@@ -87,13 +88,18 @@ impl ColourPalette {
             let mut rng = game::get_rng();
 
             let c = &self.colours[rng.gen_range(0..self.colours.len())];
-            if 0.0 <= c.red && c.red <= 1.0
-                && 0.0 <= c.green && c.green <= 1.0
-                && 0.0 <= c.blue && c.blue <= 1.0
-                && 0.0 <= c.alpha && c.alpha <= 1.0 {
+            if 0.0 <= c.red
+                && c.red <= 1.0
+                && 0.0 <= c.green
+                && c.green <= 1.0
+                && 0.0 <= c.blue
+                && c.blue <= 1.0
+                && 0.0 <= c.alpha
+                && c.alpha <= 1.0
+            {
                 return Ok(Colour::new(c.red, c.green, c.blue, c.alpha));
             }
-            return Err(format!("color values must be 0.0 <= r/g/b/a <= 1.0"))
+            return Err("color values must be 0.0 <= r/g/b/a <= 1.0".to_string());
         }
         Ok(rand::random())
     }
@@ -138,61 +144,67 @@ impl Jelatofish {
         */
         let mut rng = game::get_rng();
         let layer_count = match layer_count {
-            Some(x) if Jelatofish::MIN_LAYERS <= x && x <= Jelatofish::MAX_LAYERS => x,
+            Some(x) if (Jelatofish::MIN_LAYERS..=Jelatofish::MAX_LAYERS).contains(&x) => x,
             None => rng.gen_range(Jelatofish::MIN_LAYERS..=Jelatofish::MAX_LAYERS),
-            _ => return Err(
-                format!(
+            _ => {
+                return Err(format!(
                     "must be {} <= layer_count <= {}",
                     Jelatofish::MIN_LAYERS,
                     Jelatofish::MAX_LAYERS,
-                )
-            ),
+                ))
+            }
         };
         let cutoff_threshold = match cutoff_threshold {
             Some(x) if x <= Jelatofish::MAX_CUTOFF_THRESHOLD => x,
             None => rng.gen_range(0.0..=Jelatofish::MAX_CUTOFF_THRESHOLD),
-            _ => return Err(
-                format!(
+            _ => {
+                return Err(format!(
                     "must be cutoff_threshold <= {}",
                     Jelatofish::MAX_CUTOFF_THRESHOLD
-                )
-            ),
+                ))
+            }
         };
 
         Ok(Jelatofish {
-            size: size,
-            cutoff_threshold: cutoff_threshold,
-            layers: vec![0; layer_count].iter().map(|_| {
-                /*
-                Now allocate random layers to use for the image and mask of this layer.
-                Half the time, we use the image as its own mask.
-                Half the time, we invert the mask.
-                */
-                //Now pick some random colours to use as fore and back of gradients.
-                let back = colours.sample().unwrap();
-                //The fore and back colours should NEVER be equal.
-                //Keep picking random colours until they don't match.
-                let fore = loop {
-                    let fore = colours.sample().unwrap();
-                    if fore.red != back.red || fore.green != back.green || fore.blue != back.blue {
-                        break fore;
+            size,
+            cutoff_threshold,
+            layers: vec![0; layer_count]
+                .iter()
+                .map(|_| {
+                    /*
+                    Now allocate random layers to use for the image and mask of this layer.
+                    Half the time, we use the image as its own mask.
+                    Half the time, we invert the mask.
+                    */
+                    //Now pick some random colours to use as fore and back of gradients.
+                    let back = colours.sample().unwrap();
+                    //The fore and back colours should NEVER be equal.
+                    //Keep picking random colours until they don't match.
+                    let fore = loop {
+                        let fore = colours.sample().unwrap();
+                        if fore.red != back.red
+                            || fore.green != back.green
+                            || fore.blue != back.blue
+                        {
+                            break fore;
+                        }
+                    };
+                    let params: generators::GeneratorParams = rand::random();
+                    ColourLayer {
+                        image: generators::generate(size, &rand::random(), &params),
+                        //Flip a coin. If it lands heads-up, create another layer for use as a mask.
+                        mask: if game::maybe() {
+                            Some(generators::generate(size, &rand::random(), &params))
+                        } else {
+                            None
+                        },
+                        //Flip another coin. If it lands heads-up, set the flag so we invert this layer.
+                        invert_mask: game::maybe(),
+                        back,
+                        fore,
                     }
-                };
-                let params: generators::GeneratorParams = rand::random();
-                ColourLayer {
-                    image: generators::generate(size, &rand::random(), &params),
-                    //Flip a coin. If it lands heads-up, create another layer for use as a mask.
-                    mask: if game::maybe() {
-                        Some(
-                            generators::generate(size, &rand::random(), &params)
-                        )
-                    } else {None},
-                    //Flip another coin. If it lands heads-up, set the flag so we invert this layer.
-                    invert_mask: game::maybe(),
-                    back: back,
-                    fore: fore,
-                }
-            }).collect()
+                })
+                .collect(),
         })
     }
     pub fn get_pixel_val(&self, x: usize, y: usize) -> Result<Colour, String> {
@@ -207,7 +219,10 @@ impl Jelatofish {
         */
         //Did we get valid parameters?
         if x >= self.size.width && y >= self.size.height {
-            return Err(format!("must be x >= {} && y >= {}", self.size.width, self.size.height));
+            return Err(format!(
+                "must be x >= {} && y >= {}",
+                self.size.width, self.size.height
+            ));
         }
         let mut outval: Colour = Default::default();
         for layer in &self.layers {
@@ -219,7 +234,11 @@ impl Jelatofish {
                 None => layer.image[x][y],
             };
             //Are we supposed to invert the mask value we got?
-            let maskval = if layer.invert_mask {1.0 - maskval} else {maskval};
+            let maskval = if layer.invert_mask {
+                1.0 - maskval
+            } else {
+                maskval
+            };
             /*
             Now we are ready. Calculate the image value for this layer.
             We use the image value as the proportion of the distance between
@@ -243,14 +262,15 @@ impl Jelatofish {
             through.
             */
             outval.red = (outval.red * outval.alpha) + (layerpixel.red * (1.0 - outval.alpha));
-            outval.green = (outval.green * outval.alpha) + (layerpixel.green * (1.0 - outval.alpha));
+            outval.green =
+                (outval.green * outval.alpha) + (layerpixel.green * (1.0 - outval.alpha));
             outval.blue = (outval.blue * outval.alpha) + (layerpixel.blue * (1.0 - outval.alpha));
             /*
             Add the alpha channels (representing opacity); if the result is greater
             than 100% opacity, we just stop calculating (since no further layers
             will produce visible data).
             */
-            layerpixel.alpha = layerpixel.alpha * (1.0 - outval.alpha);
+            layerpixel.alpha *= 1.0 - outval.alpha;
             if layerpixel.alpha + outval.alpha + self.cutoff_threshold >= 1.0 {
                 outval.alpha = 1.0;
                 /*
@@ -272,31 +292,41 @@ pub fn new_fish_image() -> Box<[u8]> {
     let height = 256;
     let fish = Jelatofish::random(
         types::Area::new(width, height),
-        &Default::default(), None, None
-    ).unwrap();
+        &Default::default(),
+        None,
+        None,
+    )
+    .unwrap();
     const MAX_CHANVAL: f64 = 255.0;
 
-    let image: Vec<u8> = vec![vec![0 as f64; width]; height].iter().enumerate().map(
-        |(y, line)| {
-            let line: Vec<u8> = line.iter().enumerate().map(
-                |(x, _)| {
-                    let p = fish.get_pixel_val(x as usize, y as usize).unwrap().scale(MAX_CHANVAL);
+    let image: Vec<u8> = vec![vec![0 as f64; width]; height]
+        .iter()
+        .enumerate()
+        .flat_map(|(y, line)| {
+            let line: Vec<u8> = line
+                .iter()
+                .enumerate()
+                .flat_map(|(x, _)| {
+                    let p = fish
+                        .get_pixel_val(x, y)
+                        .unwrap()
+                        .scale(MAX_CHANVAL);
                     vec![p.red as u8, p.green as u8, p.blue as u8, 255]
-                }
-            ).flatten().collect();
+                })
+                .collect();
             line
-        }
-    ).flatten().collect();
+        })
+        .collect();
     image.into_boxed_slice()
 }
 
 pub fn save_test_image(
-    width: usize, height: usize, generator: generators::Generators, filename: &str
+    width: usize,
+    height: usize,
+    generator: generators::Generators,
+    filename: &str,
 ) {
-    let image = generators::generate(
-        types::Area::new(width, height),
-        &generator, &rand::random()
-    );
+    let image = generators::generate(types::Area::new(width, height), &generator, &rand::random());
     let mut imgbuf = image::ImageBuffer::new(width as u32, height as u32);
 
     const MAX_CHANVAL: f64 = 255.0;
@@ -314,18 +344,20 @@ pub fn save_test_image(
 pub fn save_fish_image(width: usize, height: usize, filename: &str) {
     let fish = Jelatofish::random(
         types::Area::new(width, height),
-        &Default::default(), None, None
-    ).unwrap();
+        &Default::default(),
+        None,
+        None,
+    )
+    .unwrap();
     let mut imgbuf = image::ImageBuffer::new(width as u32, height as u32);
 
     const MAX_CHANVAL: f64 = 255.0;
     for (x, y, pixel) in imgbuf.enumerate_pixels_mut() {
-        let p = fish.get_pixel_val(x as usize, y as usize).unwrap().scale(MAX_CHANVAL);
-        *pixel = image::Rgb([
-            p.red as u8,
-            p.blue as u8,
-            p.green as u8,
-        ]);
+        let p = fish
+            .get_pixel_val(x as usize, y as usize)
+            .unwrap()
+            .scale(MAX_CHANVAL);
+        *pixel = image::Rgb([p.red as u8, p.blue as u8, p.green as u8]);
     }
     imgbuf.save(&Path::new(filename)).unwrap();
 }

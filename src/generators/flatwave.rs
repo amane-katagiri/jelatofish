@@ -26,7 +26,9 @@ use rand::{
 };
 
 #[derive(Debug)]
+#[derive(Default)]
 pub enum InterferenceMethods {
+    #[default]
     DEFAULT,
     MostExtreme,
     LeastExtreme,
@@ -45,14 +47,9 @@ impl Distribution<InterferenceMethods> for Standard {
         }
     }
 }
-impl Default for InterferenceMethods {
-    fn default() -> Self {
-        InterferenceMethods::DEFAULT
-    }
-}
 
-#[derive(Debug)]
-#[derive(Default)]
+
+#[derive(Debug, Default)]
 pub struct Accel {
     scale: f64,
     amp: f64,
@@ -61,7 +58,7 @@ pub struct Accel {
 impl Distribution<Accel> for Standard {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Accel {
         Accel {
-            scale: rng.gen_range(2.0..30.0,),
+            scale: rng.gen_range(2.0..30.0),
             amp: rng.gen_range(0.0..0.1),
             pack: rand::random(),
         }
@@ -73,8 +70,7 @@ A wave is a curve on a line.
 Each wave may have different scaling
 and display packing options.
 */
-#[derive(Debug)]
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct Wave {
     scale: f64,
     pack_method: super::PackMethods,
@@ -85,8 +81,12 @@ impl Distribution<Wave> for Standard {
         let pack_method: super::PackMethods = rand::random();
         Wave {
             scale: rng.gen_range(2.0..30.0)
-                * if let super::PackMethods::ScaleToFit = pack_method {2.0} else {1.0},
-            pack_method: pack_method,
+                * if let super::PackMethods::ScaleToFit = pack_method {
+                    2.0
+                } else {
+                    1.0
+                },
+            pack_method,
             accel: rand::random(),
         }
     }
@@ -97,8 +97,7 @@ A wavepacket is a group of waves on the same line.
 A wavepacket has an origin and an angle. All waves
 in the packet are calculated relative to that line.
 */
-#[derive(Debug)]
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct WavePacket {
     origin: super::GeneratorPoint,
     angle: f64,
@@ -141,7 +140,8 @@ impl Distribution<FlatwaveParams> for Standard {
         FlatwaveParams {
             interference_method: rand::random(),
             packets: (0..=rng.gen_range(1..=FlatwaveParams::MAX_WAVE_PACKETS))
-                .map(|_| rand::random()).collect(),
+                .map(|_| rand::random())
+                .collect(),
         }
     }
 }
@@ -153,25 +153,35 @@ pub fn generate(pixel: super::GeneratorPoint, params: &FlatwaveParams) -> f64 {
     where on the linear wave this point happens to fall.
     */
     let mut out = match params.interference_method {
-        InterferenceMethods::Min => 1.0,
-        InterferenceMethods::MostExtreme => 0.5,
-        _ => 0.0,
-    } as f64;
+        InterferenceMethods::Min => 1.0_f64,
+        InterferenceMethods::MostExtreme => 0.5_f64,
+        _ => 0.0_f64,
+    };
     for packet in &params.packets {
-        let layer = calc_wave_packet(pixel, &packet);
+        let layer = calc_wave_packet(pixel, packet);
         out = if params.packets.len() > 1 {
             match params.interference_method {
                 /*
                 Is this value's distance from 0.5 greater than the existing
                 value's distance from 0.5?
                 */
-                InterferenceMethods::MostExtreme =>
-                    if (layer - 0.5).abs() > (out - 0.5).abs() {layer} else {out},
+                InterferenceMethods::MostExtreme => {
+                    if (layer - 0.5).abs() > (out - 0.5).abs() {
+                        layer
+                    } else {
+                        out
+                    }
+                }
                 /*
                 Is this value closer to the median than the existing value?
                 */
-                InterferenceMethods::LeastExtreme =>
-                    if (layer - 0.5).abs() < (out - 0.5).abs() {layer} else {out},
+                InterferenceMethods::LeastExtreme => {
+                    if (layer - 0.5).abs() < (out - 0.5).abs() {
+                        layer
+                    } else {
+                        out
+                    }
+                }
                 //Is this value closer to 1 than the existing value?
                 InterferenceMethods::Max => f64::max(layer, out),
                 //Is this value closer to zero than the existing one was?
@@ -181,7 +191,9 @@ pub fn generate(pixel: super::GeneratorPoint, params: &FlatwaveParams) -> f64 {
                 //Beats me what to do with this case. It should never happen.
                 _ => layer,
             }
-        } else {layer};
+        } else {
+            layer
+        };
     }
     //If we are in average mode, do the averaging now.
     if let InterferenceMethods::Average = params.interference_method {
@@ -204,8 +216,7 @@ fn calc_wave_packet(pixel: super::GeneratorPoint, params: &WavePacket) -> f64 {
     //Now figure the length from the origin to this point.
     let hypotenuse = x.hypot(y);
     //Find the angle of the line from this point to the origin.
-    let hypangle = (y / x).atan() + params.angle
-        + if x < 0.0 {std::f64::consts::PI} else {0.0};
+    let hypangle = (y / x).atan() + params.angle + if x < 0.0 { std::f64::consts::PI } else { 0.0 };
     //Using the angle and the hypotenuse, we can figure out the individual legs.
     let transverse = hypangle.cos() * hypotenuse;
     let distance = hypangle.sin() * hypotenuse;
@@ -223,6 +234,7 @@ fn calc_wave(distance: f64, transverse: f64, params: &Wave) -> f64 {
         distance
             + super::packed_cos(transverse, params.accel.scale, &params.accel.pack)
                 * params.accel.amp,
-        params.accel.scale, &params.pack_method
+        params.accel.scale,
+        &params.pack_method,
     )
 }

@@ -122,18 +122,16 @@ impl Distribution<GeneratorParams> for Standard {
 }
 
 #[derive(Debug)]
+#[derive(Default)]
 pub enum PackMethods {
+    #[default]
     DEFAULT,
     ScaleToFit,
     FlipSignToFit,
     TruncateToFit,
     SlopeToFit,
 }
-impl Default for PackMethods {
-    fn default() -> Self {
-        PackMethods::DEFAULT
-    }
-}
+
 impl Distribution<PackMethods> for Standard {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> PackMethods {
         match rng.gen_range(0..=3) {
@@ -179,8 +177,8 @@ struct RollVector {
 impl RollVector {
     fn new(x: usize, y: usize) -> Self {
         RollVector {
-            x: x,
-            y: y,
+            x,
+            y,
         }
     }
 }
@@ -210,7 +208,7 @@ pub fn generate(
             line.iter().enumerate().map(
                 |(x, _)|
                     f64::min(1.0, f64::max(0.0, get_layer_pixel(
-                        types::PixelPoint::new(x, y), size, roll, generator, &params
+                        types::PixelPoint::new(x, y), size, roll, generator, params
                     ).unwrap()))
             ).collect()
     ).collect()
@@ -228,8 +226,8 @@ pub struct GeneratorPoint {
 impl GeneratorPoint {
     pub fn new(x: f64, y: f64) -> Self {
         GeneratorPoint {
-            x: x,
-            y: y,
+            x,
+            y,
         }
     }
 }

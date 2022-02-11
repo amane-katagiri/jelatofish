@@ -26,7 +26,9 @@ use rand::{
 };
 
 #[derive(Debug)]
+#[derive(Default)]
 pub enum SinePositivizingMethods {
+    #[default]
     DEFAULT,
     CompressMethod,
     TruncateMethod,
@@ -43,14 +45,12 @@ impl Distribution<SinePositivizingMethods> for Standard {
         }
     }
 }
-impl Default for SinePositivizingMethods {
-    fn default() -> Self {
-        SinePositivizingMethods::DEFAULT
-    }
-}
+
 
 #[derive(Debug)]
+#[derive(Default)]
 pub enum TwirlMethods {
+    #[default]
     DEFAULT,
     NoneMethod,
     CurveMethod,
@@ -65,11 +65,7 @@ impl Distribution<TwirlMethods> for Standard {
         }
     }
 }
-impl Default for TwirlMethods {
-    fn default() -> Self {
-        TwirlMethods::DEFAULT
-    }
-}
+
 
 #[derive(Debug)]
 #[derive(Default)]
@@ -230,13 +226,13 @@ fn rawpoint(x: f64, y: f64, params: &SpinflakeParams) -> f64 {
         let pointangle = (y / x).atan();
         let mut edgedist = params.radius;
         for layer in &params.layer {
-            edgedist += calcwave(pointangle, origindist, &layer);
+            edgedist += calcwave(pointangle, origindist, layer);
         }
         let edgedist =
             if params.average_florets {edgedist / (params.layer.len() as f64)} else {edgedist};
         //Our return value is the distance from the edge, proportionate
         //to the distance from the origin to the edge.
-        let proportiondist = ((edgedist - origindist) / edgedist) as f64;
+        let proportiondist = (edgedist - origindist) / edgedist;
         //If the value is >=0, we are inside the shape. Otherwise, we're outside it.
         if proportiondist >= 0.0 {
             return proportiondist.sqrt();
