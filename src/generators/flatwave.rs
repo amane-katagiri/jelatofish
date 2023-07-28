@@ -48,12 +48,30 @@ impl Distribution<InterferenceMethods> for Standard {
     }
 }
 
+#[derive(Debug)]
+#[derive(Default)]
+pub enum AccelMethods {
+    #[default]
+    DEFAULT,
+    Enabled,
+    Disabled,
+}
+impl Distribution<AccelMethods> for Standard {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> AccelMethods {
+        match rng.gen_range(0..=1) {
+            0 => AccelMethods::Enabled,
+            _ => AccelMethods::Disabled,
+        }
+    }
+}
+
 
 #[derive(Debug, Default)]
 pub struct Accel {
     scale: f64,
     amp: f64,
     pack: super::PackMethods,
+    accel: AccelMethods,
 }
 impl Distribution<Accel> for Standard {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Accel {
@@ -61,6 +79,7 @@ impl Distribution<Accel> for Standard {
             scale: rng.gen_range(2.0..30.0),
             amp: rng.gen_range(0.0..0.1),
             pack: rand::random(),
+            accel: rand::random(),
         }
     }
 }
@@ -232,9 +251,14 @@ fn calc_wave(distance: f64, transverse: f64, params: &Wave) -> f64 {
     */
     super::packed_cos(
         distance
-            + super::packed_cos(transverse, params.accel.scale, &params.accel.pack)
-                * params.accel.amp,
-        params.accel.scale,
+            + match params.accel.accel {
+                AccelMethods::Enabled => {
+                    super::packed_cos(transverse, params.accel.scale, &params.accel.pack)
+                        * params.accel.amp
+                },
+                _ => {0.0}
+            },
+        params.scale,
         &params.pack_method,
     )
 }
