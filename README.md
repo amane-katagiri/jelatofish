@@ -1,6 +1,6 @@
 # jelatofish
 
-Yet another random image generator for wallpaper or avatar inspired by xstarfish.
+Yet another random image generator for wallpaper or avatar inspired by xstarfish. Original source is `xstarfish_1.1+ds.orig.tar.xz`.
 
 ## Run in browser
 
