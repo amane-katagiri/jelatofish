@@ -79,9 +79,6 @@ impl Bubble {
 
 #[derive(Debug)]
 pub struct BubbleParams {
-    scale: Range,
-    squish: Range,
-    angle: Range,
     bubbles: Vec<Bubble>,
 }
 impl BubbleParams {
@@ -94,7 +91,6 @@ impl Default for BubbleParams {
             bubbles: (0..BubbleParams::MIN_BUBBLES)
                 .map(|_| Default::default())
                 .collect(),
-            ..Default::default()
         }
     }
 }
@@ -131,9 +127,6 @@ impl Distribution<BubbleParams> for Standard {
             .map(|_| Bubble::random(&scale, &squish, &angle))
             .collect();
         BubbleParams {
-            scale,
-            squish,
-            angle,
             bubbles,
         }
     }
