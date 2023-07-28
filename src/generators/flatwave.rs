@@ -150,7 +150,7 @@ impl Default for FlatwaveParams {
     fn default() -> Self {
         FlatwaveParams {
             packets: (0..1).map(|_| Default::default()).collect(),
-            ..Default::default()
+            interference_method: Default::default(),
         }
     }
 }

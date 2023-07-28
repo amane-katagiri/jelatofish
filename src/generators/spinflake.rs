@@ -144,7 +144,11 @@ impl Default for SpinflakeParams {
     fn default() -> Self {
         SpinflakeParams {
             layer: (0..1).map(|_| Default::default()).collect(),
-            ..Default::default()
+            origin: Default::default(),
+            radius: Default::default(),
+            squish: Default::default(),
+            twist: Default::default(),
+            average_florets: Default::default(),
         }
     }
 }
