@@ -59,7 +59,7 @@ impl BoundingBox {
 
 #[derive(Debug)]
 pub struct RangefracParams {
-    data: [[f64; RangefracParams::VALMATRIX_SIZE]; RangefracParams::VALMATRIX_SIZE],
+    data: Box<[[f64; RangefracParams::VALMATRIX_SIZE]; RangefracParams::VALMATRIX_SIZE]>,
 }
 impl RangefracParams {
     const VALMATRIX_SCALE: u32 = 8;
@@ -68,7 +68,9 @@ impl RangefracParams {
 impl Default for RangefracParams {
     fn default() -> Self {
         RangefracParams {
-            data: [[0.0; RangefracParams::VALMATRIX_SIZE]; RangefracParams::VALMATRIX_SIZE],
+            data: Box::new(
+                [[0.0; RangefracParams::VALMATRIX_SIZE]; RangefracParams::VALMATRIX_SIZE],
+            ),
         }
     }
 }
@@ -81,8 +83,10 @@ impl Distribution<RangefracParams> for Standard {
         min and max. If the neighboring point exceeds min or max, use its
         value as the new min or max. Repeat.
         */
-        let mut level = [[0_i32; RangefracParams::VALMATRIX_SIZE]; RangefracParams::VALMATRIX_SIZE];
-        let mut data = [[0.0; RangefracParams::VALMATRIX_SIZE]; RangefracParams::VALMATRIX_SIZE];
+        let mut level =
+            Box::new([[0_i32; RangefracParams::VALMATRIX_SIZE]; RangefracParams::VALMATRIX_SIZE]);
+        let mut data =
+            Box::new([[0.0; RangefracParams::VALMATRIX_SIZE]; RangefracParams::VALMATRIX_SIZE]);
 
         for step in 1..=RangefracParams::VALMATRIX_SCALE {
             let step = (2_usize).pow(RangefracParams::VALMATRIX_SCALE - step);
