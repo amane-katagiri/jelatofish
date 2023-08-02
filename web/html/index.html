@@ -1,39 +1,112 @@
 <!DOCTYPE html>
 <html>
- <head>
-   <meta charset="utf-8">
-   <title>Hello jelatofish!</title>
-   <meta name="viewport" content="width=device-width, initial-scale=1.0">
- </head>
- <body>
-   <img id="fish_image">
-   <!-- Note the usage of `type=module` here as this is an ES6 module -->
-   <script type="module">
-     import init, * as wasm from "./pkg/jelatofish.js";
-     async function run() {
-       await init();
-       var buffer = wasm.new_fish_image();
-       // create off-screen canvas element
-       var canvas = document.createElement("canvas"),
-           ctx = canvas.getContext("2d");
+  <head>
+    <meta charset="utf-8" />
+    <title>Hello jelatofish!</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="/favicon/32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="/favicon/16x16.png" sizes="16x16" />
+    <style>
+      body {
+        margin: 0;
+      }
+      .tile {
+        position: absolute;
+        border: 4px solid;
+      }
+      .ff-tile {
+        top: 512px;
+        left: 512px;
+      }
+      .fg-tile {
+        top: 128px;
+        left: 512px;
+      }
+      .gf-tile {
+        top: 512px;
+        left: 128px;
+      }
+      .gg-tile {
+        top: 128px;
+        left: 128px;
+      }
+      img {
+        display: none;
+      }
+      img[src] {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <a id="fish_image_ff_link" target="_blank" rel="noopener noreferrer"
+      ><img id="fish_image_ff" class="tile ff-tile"
+    /></a>
+    <a id="fish_image_fg_link" target="_blank" rel="noopener noreferrer"
+      ><img id="fish_image_fg" class="tile fg-tile"
+    /></a>
+    <a id="fish_image_gf_link" target="_blank" rel="noopener noreferrer"
+      ><img id="fish_image_gf" class="tile gf-tile"
+    /></a>
+    <a id="fish_image_gg_link" target="_blank" rel="noopener noreferrer"
+      ><img id="fish_image_gg" class="tile gg-tile"
+    /></a>
+    <!-- Note the usage of `type=module` here as this is an ES6 module -->
+    <script type="module">
+      import init, * as wasm from "./pkg/jelatofish.js";
+      function createCanvas() {
+        var canvas = document.createElement("canvas"),
+          ctx = canvas.getContext("2d");
+        canvas.width = 256;
+        canvas.height = 256;
+        return { canvas, ctx };
+      }
+      async function run() {
+        await init();
+        var buffer = wasm.new_fish_image();
 
-       canvas.width = 256;
-       canvas.height = 256;
+        // create off-screen canvas element
+        var canvasFf = createCanvas();
+        var canvasFg = createCanvas();
+        var canvasGf = createCanvas();
+        var canvasGg = createCanvas();
 
-       // create imageData object
-       var idata = ctx.createImageData(256, 256);
+        // create imageData object and aset our buffer as source
+        var idata = canvasFf.ctx.createImageData(256, 256);
+        idata.data.set(buffer);
 
-       // set our buffer as source
-       idata.data.set(buffer);
+        // update canvas with new data
+        canvasFf.ctx.putImageData(idata, 0, 0);
+        var dataUriFf = canvasFf.canvas.toDataURL();
 
-       // update canvas with new data
-       ctx.putImageData(idata, 0, 0);
-       var dataUri = canvas.toDataURL();
-       document.body.style.backgroundRepeat = "repeat";
-       document.body.style.backgroundImage = dataUri;
-       fish_image.src = dataUri;
-     }
-     run();
-   </script>
- </body>
+        canvasFg.ctx.putImageData(idata, 0, -128);
+        canvasFg.ctx.putImageData(idata, 0, 128);
+        var dataUriFg = canvasFg.canvas.toDataURL();
+
+        canvasGf.ctx.putImageData(idata, -128, 0);
+        canvasGf.ctx.putImageData(idata, 128, 0);
+        var dataUriGf = canvasGf.canvas.toDataURL();
+
+        canvasGg.ctx.putImageData(idata, -128, -128);
+        canvasGg.ctx.putImageData(idata, 128, 128);
+        canvasGg.ctx.putImageData(idata, -128, 128);
+        canvasGg.ctx.putImageData(idata, 128, -128);
+        var dataUriGg = canvasGg.canvas.toDataURL();
+
+        // set dom with canvas data
+        document.body.style.backgroundRepeat = "repeat";
+        document.body.style.backgroundImage = "url(" + dataUriFf + ")";
+
+        fish_image_ff.src = dataUriFf;
+        fish_image_ff_link.href = dataUriFf;
+        fish_image_fg.src = dataUriFg;
+        fish_image_fg_link.href = dataUriFg;
+        fish_image_gf.src = dataUriGf;
+        fish_image_gf_link.href = dataUriGf;
+        fish_image_gg.src = dataUriGg;
+        fish_image_gg_link.href = dataUriGg;
+      }
+      run();
+    </script>
+  </body>
 </html>

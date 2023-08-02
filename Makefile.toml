@@ -6,7 +6,9 @@ script = [
 mkdir -p ./build
 rm -rf ./build/*
 cp web/html/index.html ./build/
-cp -r ./pkg/ ./build/
+cp -r web/favicon/ ./build/
+mkdir ./build/pkg/
+cp -r ./pkg/jelatofish.js ./pkg/jelatofish_bg.wasm ./build/pkg/
 '''
 ]
 dependencies = ["wasm"]
