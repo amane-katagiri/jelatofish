@@ -12,6 +12,7 @@
         min-width: 896px;
         min-height: 896px;
         background-image: url(/static/bg-default.png);
+        background-repeat: repeat;
         font-family: sans-serif;
       }
       @keyframes shichihenge-border {
@@ -97,11 +98,14 @@
       }
       .notice {
         animation: shichihenge-bg 5s linear infinite;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
         text-align: center;
         padding: 0.25em;
-        min-width: 100%;
         white-space: nowrap;
-        box-sizing: border-box;
+      }
+      .notice::-webkit-scrollbar {
+        display: none;
       }
       img {
         display: none;
@@ -117,11 +121,9 @@
     <img id="fish_image_gf" class="tile gf-tile" />
     <img id="fish_image_gg" class="tile gg-tile" />
     <div id="container" class="hidden">
-      <div class="main"></div>
       <div class="notice">
-        <span
-          >Right-click / long-press inside rainbow frames to save image.</span
-        >
+        Right-click / long-press inside rainbow frames to save image or
+        <button id="regenerate">regenerate</button>.
         <a
           href="https://github.com/amane-katagiri/jelatofish"
           target="_blank"
@@ -130,6 +132,7 @@
           amane-katagiri/jelatofish</a
         >
       </div>
+      <div class="main"></div>
     </div>
     <!-- Note the usage of `type=module` here as this is an ES6 module -->
     <script type="module">
@@ -141,8 +144,15 @@
         canvas.height = 256;
         return { canvas, ctx };
       }
+      async function reset() {
+        document.body.style = undefined;
+        container.className = "hidden";
+        fish_image_ff.removeAttribute("src");
+        fish_image_fg.removeAttribute("src");
+        fish_image_gf.removeAttribute("src");
+        fish_image_gg.removeAttribute("src");
+      }
       async function run() {
-        await init();
         var buffer = wasm.new_fish_image();
 
         // create off-screen canvas element
@@ -174,7 +184,6 @@
         var dataUriGg = canvasGg.canvas.toDataURL();
 
         // set dom with canvas data
-        document.body.style.backgroundRepeat = "repeat";
         document.body.style.backgroundImage = "url(" + dataUriFf + ")";
 
         fish_image_ff.src = dataUriFf;
@@ -184,7 +193,10 @@
 
         container.className = "container";
       }
-      run();
+      regenerate.addEventListener("click", function () {
+        reset().then(setTimeout(run, 10));
+      });
+      init().then(run);
     </script>
   </body>
 </html>
