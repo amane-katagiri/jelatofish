@@ -7,6 +7,7 @@ mkdir -p ./build
 rm -rf ./build/*
 cp web/html/index.html ./build/
 cp -r web/favicon/ ./build/
+cp -r web/static/ ./build/
 mkdir ./build/pkg/
 cp -r ./pkg/jelatofish.js ./pkg/jelatofish_bg.wasm ./build/pkg/
 '''

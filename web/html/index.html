@@ -3,16 +3,69 @@
   <head>
     <meta charset="utf-8" />
     <title>Hello jelatofish!</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=896" />
     <link rel="icon" type="image/png" href="/favicon/32x32.png" sizes="32x32" />
     <link rel="icon" type="image/png" href="/favicon/16x16.png" sizes="16x16" />
     <style>
       body {
         margin: 0;
+        min-width: 896px;
+        min-height: 1px;
+        background-image: url(/static/bg-default.png);
+        font-family: sans-serif;
+      }
+      @keyframes shichihenge-border {
+        0% {
+          border-color: #ff0080;
+        }
+        10% {
+          border-color: #ff0000;
+        }
+        30% {
+          border-color: #ffff00;
+        }
+        50% {
+          border-color: #00ff00;
+        }
+        70% {
+          border-color: #00ffff;
+        }
+        90% {
+          border-color: #ff00ff;
+        }
+        100% {
+          border-color: #ff0080;
+        }
+      }
+      @keyframes shichihenge-bg {
+        0% {
+          background-color: #ff0080;
+        }
+        10% {
+          background-color: #ff0000;
+        }
+        30% {
+          background-color: #ffff00;
+        }
+        50% {
+          background-color: #00ff00;
+        }
+        70% {
+          background-color: #00ffff;
+        }
+        90% {
+          background-color: #ff00ff;
+        }
+        100% {
+          background-color: #ff0080;
+        }
       }
       .tile {
         position: absolute;
-        border: 4px solid;
+        border: 2px solid;
+        animation: shichihenge-border 5s linear infinite;
+        width: 256px;
+        height: 256px;
       }
       .ff-tile {
         top: 512px;
@@ -30,6 +83,25 @@
         top: 128px;
         left: 128px;
       }
+      .hidden {
+        display: none;
+      }
+      .container {
+        display: flex;
+        flex-direction: column;
+        height: 100dvh;
+      }
+      .main {
+        flex-grow: 1;
+      }
+      .notice {
+        animation: shichihenge-bg 5s linear infinite;
+        text-align: center;
+        padding: 0.25em;
+        min-width: 100%;
+        white-space: nowrap;
+        box-sizing: border-box;
+      }
       img {
         display: none;
       }
@@ -39,18 +111,25 @@
     </style>
   </head>
   <body>
-    <a id="fish_image_ff_link" target="_blank" rel="noopener noreferrer"
-      ><img id="fish_image_ff" class="tile ff-tile"
-    /></a>
-    <a id="fish_image_fg_link" target="_blank" rel="noopener noreferrer"
-      ><img id="fish_image_fg" class="tile fg-tile"
-    /></a>
-    <a id="fish_image_gf_link" target="_blank" rel="noopener noreferrer"
-      ><img id="fish_image_gf" class="tile gf-tile"
-    /></a>
-    <a id="fish_image_gg_link" target="_blank" rel="noopener noreferrer"
-      ><img id="fish_image_gg" class="tile gg-tile"
-    /></a>
+    <img id="fish_image_ff" class="tile ff-tile" />
+    <img id="fish_image_fg" class="tile fg-tile" />
+    <img id="fish_image_gf" class="tile gf-tile" />
+    <img id="fish_image_gg" class="tile gg-tile" />
+    <div id="container" class="hidden">
+      <div class="main"></div>
+      <div class="notice">
+        <span
+          >Right-click / long-press inside rainbow frames to save image.</span
+        >
+        <a
+          href="https://github.com/amane-katagiri/jelatofish"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          amane-katagiri/jelatofish</a
+        >
+      </div>
+    </div>
     <!-- Note the usage of `type=module` here as this is an ES6 module -->
     <script type="module">
       import init, * as wasm from "./pkg/jelatofish.js";
@@ -98,13 +177,11 @@
         document.body.style.backgroundImage = "url(" + dataUriFf + ")";
 
         fish_image_ff.src = dataUriFf;
-        fish_image_ff_link.href = dataUriFf;
         fish_image_fg.src = dataUriFg;
-        fish_image_fg_link.href = dataUriFg;
         fish_image_gf.src = dataUriGf;
-        fish_image_gf_link.href = dataUriGf;
         fish_image_gg.src = dataUriGg;
-        fish_image_gg_link.href = dataUriGg;
+
+        container.className = "container";
       }
       run();
     </script>
