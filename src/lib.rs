@@ -357,7 +357,7 @@ pub fn save_fish_image(width: usize, height: usize, filename: &str) {
             .get_pixel_val(x as usize, y as usize)
             .unwrap()
             .scale(MAX_CHANVAL);
-        *pixel = image::Rgb([p.red as u8, p.blue as u8, p.green as u8]);
+        *pixel = image::Rgb([p.red as u8, p.green as u8, p.blue as u8]);
     }
     imgbuf.save(&Path::new(filename)).unwrap();
 }
